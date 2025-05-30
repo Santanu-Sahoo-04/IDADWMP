@@ -1,0 +1,85 @@
+.welcome-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3e8ef 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.welcome-header {
+  width: 100%;
+  background: #1976d2;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 0 24px 0;
+  margin-bottom: 36px;
+  box-shadow: 0 2px 8px #0001;
+}
+
+.company-logo {
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.project-title {
+  font-size: 2.3rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.welcome-body {
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 20px #0002;
+  padding: 32px 24px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-desc {
+  color: #444;
+  font-size: 1.08rem;
+  margin-bottom: 2.2rem;
+  text-align: center;
+}
+
+.login-btn {
+  width: 100%;
+  font-size: 1.08rem;
+  font-weight: 600;
+  padding: 12px 0;
+  margin-bottom: 18px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.login-btn.senior {
+  background: #1976d2;
+  color: white;
+}
+
+.login-btn.senior:hover {
+  background: #155fa0;
+}
+
+.login-btn.junior {
+  background: #f9a825;
+  color: white;
+}
+
+.login-btn.junior:hover {
+  background: #c17900;
+}
+
+.password-rules {
+  color: #666;
+  margin-top: 25px;
+  font-size: 0.97rem;
+  text-align: center;
+}

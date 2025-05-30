@@ -1,0 +1,8 @@
+{
+  "name": "database-setup",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "better-sqlite3": "^8.6.0"
+  }
+}
