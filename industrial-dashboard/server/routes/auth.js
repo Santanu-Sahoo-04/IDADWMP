@@ -93,10 +93,33 @@ router.post('/verify-otp', async (req, res) => {
       role: storedData.user.role
     };
 
-    otpStore.delete(email);
-    res.json({ 
+    const userRes = await pool.query(`
+      SELECT 
+        user_id AS id,
+        name,
+        email,
+        role,
+        designation,
+        area
+      FROM users 
+      WHERE user_id = $1
+    `, [storedData.user.user_id]);
+
+    const user = userRes.rows[0];
+
+    // Send user data in response
+    res.json({
       success: true,
-      redirect: storedData.user.role === 'senior' ? '/admin-dashboard' : '/user-dashboard'
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        designation: user.designation,
+        area: user.area,
+        redirect: '/dashboard'
+      },
+      redirect: '/dashboard'
     });
 
   } catch (err) {

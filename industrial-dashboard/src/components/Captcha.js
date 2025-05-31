@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { forwardRef, useState, useEffect, useRef, useImperativeHandle } from 'react';
+
 import { Typography, TextField, IconButton, Button, CircularProgress } from '@mui/material';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -25,13 +26,30 @@ function describeChar(char) {
   return char;
 }
 
-export default function Captcha({ onVerified }) {
+const Captcha = forwardRef(({ onVerified, frozen = false }, ref) => {
   const [captchaText, setCaptchaText] = useState('');
   const [userInput, setUserInput] = useState('');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const speechRef = useRef(null);
+// Expose reset method via ref
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      generateCaptcha();
+      onVerified(false);
+    }
+  }));
+
+  // Handle frozen prop changes
+  useEffect(() => {
+    if (frozen) {
+      setIsVerified(true);
+    } else {
+      setIsVerified(false);
+      generateCaptcha();
+    }
+  }, [frozen]);
 
   // Generate a new CAPTCHA
   const generateCaptcha = () => {
@@ -160,4 +178,6 @@ export default function Captcha({ onVerified }) {
       )}
     </div>
 );
-}
+});
+
+export default Captcha;

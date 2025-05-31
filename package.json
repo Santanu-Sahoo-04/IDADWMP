@@ -6,6 +6,7 @@
     "@mui/material": "^7.1.0",
     "axios": "^1.9.0",
     "react-router-dom": "^7.6.0",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "multer": "^2.0.0"
   }
 }

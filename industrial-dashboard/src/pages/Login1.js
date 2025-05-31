@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import VirtualKeyboard from '../components/VirtualKeyboard';
 import Captcha from '../components/Captcha';
 import OtpModal from '../components/OtpModal';
+import { useUser } from '../context/UserContext';
+
 
 export default function Login1() {
   const [email, setEmail] = useState('');
@@ -20,9 +22,10 @@ export default function Login1() {
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [otpWarning, setOtpWarning] = useState('');
-
   const navigate = useNavigate();
   const captchaRef = useRef(null);
+  const { login } = useUser();
+
   
 
 
@@ -95,16 +98,19 @@ export default function Login1() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ 
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
           otp: otp.toString().trim() // Force string and trim
         })
       });
       const data = await res.json();
       
       if (!res.ok) throw new Error(data.error || 'Invalid OTP');
-
       // Hard redirect to clear all state
-      window.location.href = data.redirect;
+      /*window.location.href = data.redirect;*/
+      if (data.success) {
+        login(data.user); // Stores user in context
+        navigate(data.redirect); // Navigates to dashboard
+      }
     } catch (err) {
       // Full reset
       setEmail('');

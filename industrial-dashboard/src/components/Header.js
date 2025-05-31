@@ -1,70 +1,194 @@
-/*
-
-import React from 'react';
-import { AppBar, Toolbar, Button, Typography } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  Menu,
+  MenuItem,
+  Avatar,
+  IconButton,
+  Chip
+} from '@mui/material';
+import {
+  AccountCircle,
+  Dashboard,
+  Upload,
+  People,
+  Logout
+} from '@mui/icons-material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useUser } from '../context/UserContext';
 
 export default function Header() {
-  const role = localStorage.getItem('role');
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/');
-  };
-
-  return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>Industrial Analytics</Typography>
-        <Button color="inherit" component={Link} to="/sales">Sales</Button>
-        <Button color="inherit" component={Link} to="/hr">HR</Button>
-        <Button color="inherit" component={Link} to="/production">Production</Button>
-        {(role === 'CMD' || role === 'Director' || role === 'ED' || role === 'GGM' || role === 'GM') && (
-          <Button color="inherit" component={Link} to="/upload">Upload</Button>
-        )}
-        {role && (
-          <Button color="inherit" onClick={handleLogout}>Logout</Button>
-        )}
-      </Toolbar>
-    </AppBar>
-  );
-}
-
-*/
-
-import React from 'react';
-import { AppBar, Toolbar, Typography, Button } from '@mui/material';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-
-export default function Header() {
-  //const role = localStorage.getItem('role');
   const location = useLocation();
-  const navigate = useNavigate();
+  const { user, logout, isAuthenticated, isSenior } = useUser();
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleLogout = () => {
-    localStorage.clear();
+  const handleUserMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    handleCloseUserMenu();
     navigate('/');
   };
 
-  // Only show navigation buttons if NOT on welcome or login pages
-  const hideNav = ["/", "/login1", "/login2"].includes(location.pathname);
+  const isActive = (path) => location.pathname === path;
+
+  if (!isAuthenticated) {
+    return (
+      <AppBar position="static" elevation={2}>
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Industrial Dashboard
+          </Typography>
+          <Button color="inherit" onClick={() => navigate('/')}>
+            Home
+          </Button>
+          <Button color="inherit" onClick={() => navigate('/login1')}>
+            Login
+          </Button>
+        </Toolbar>
+      </AppBar>
+    );
+  }
 
   return (
-    <AppBar position="static" color="default" elevation={1}>
+    <AppBar position="static" elevation={2}>
       <Toolbar>
-        <img src="/company-logo.png" alt="COMPANY LOGO" style={{ height: 40, marginRight: 16 }} />
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          INDUSTRIAL ANALYTICS
+        <Typography 
+          variant="h6" 
+          component="div" 
+          sx={{ cursor: 'pointer' }}
+          onClick={() => navigate('/dashboard')}
+        >
+          Industrial Dashboard
         </Typography>
-        {!hideNav && (
-          <>
-            <Button color="inherit" component={Link} to="/sales">SALES</Button>
-            <Button color="inherit" component={Link} to="/hr">HR</Button>
-            <Button color="inherit" component={Link} to="/production">PRODUCTION</Button>
-            <Button color="inherit" onClick={handleLogout}>LOGOUT</Button>
-          </>
-        )}
+
+        <Box sx={{ flexGrow: 1, display: 'flex', ml: 4 }}>
+          {/* Dashboard Navigation */}
+          <Button 
+            color="inherit" 
+            startIcon={<Dashboard />}
+            onClick={() => navigate('/dashboard')}
+            sx={{ 
+              mr: 1,
+              backgroundColor: isActive('/dashboard') ? 'rgba(255,255,255,0.1)' : 'transparent'
+            }}
+          >
+            Dashboard
+          </Button>
+
+          {/* Production Dashboard */}
+          <Button 
+            color="inherit" 
+            onClick={() => navigate('/production')}
+            sx={{ 
+              mr: 1,
+              backgroundColor: isActive('/production') ? 'rgba(255,255,255,0.1)' : 'transparent'
+            }}
+          >
+            Production
+          </Button>
+
+          {/* Sales Dashboard */}
+          <Button 
+            color="inherit" 
+            onClick={() => navigate('/sales')}
+            sx={{ 
+              mr: 1,
+              backgroundColor: isActive('/sales') ? 'rgba(255,255,255,0.1)' : 'transparent'
+            }}
+          >
+            Sales
+          </Button>
+
+          {/* HR Dashboard */}
+          <Button 
+            color="inherit" 
+            onClick={() => navigate('/hr')}
+            sx={{ 
+              mr: 1,
+              backgroundColor: isActive('/hr') ? 'rgba(255,255,255,0.1)' : 'transparent'
+            }}
+          >
+            HR
+          </Button>
+
+          {/* Senior Management Only */}
+          {isSenior && (
+            <>
+              <Button 
+                color="inherit" 
+                startIcon={<Upload />}
+                onClick={() => navigate('/upload')}
+                sx={{ 
+                  mr: 1,
+                  backgroundColor: isActive('/upload') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                }}
+              >
+                Upload Data
+              </Button>
+              
+              <Button 
+                color="inherit" 
+                startIcon={<People />}
+                onClick={() => navigate('/user-management')}
+                sx={{ 
+                  mr: 1,
+                  backgroundColor: isActive('/user-management') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                }}
+              >
+                Users
+              </Button>
+            </>
+          )}
+        </Box>
+
+        {/* User Menu */}
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Chip
+            label={isSenior ? 'Senior' : 'Junior'}
+            size="small"
+            color={isSenior ? 'secondary' : 'default'}
+            sx={{ mr: 2 }}
+          />
+          
+          <IconButton
+            size="large"
+            onClick={handleUserMenu}
+            color="inherit"
+          >
+            <Avatar sx={{ width: 32, height: 32 }}>
+              <AccountCircle />
+            </Avatar>
+          </IconButton>
+          
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleCloseUserMenu}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            <MenuItem onClick={() => { navigate('/dashboard'); handleCloseUserMenu(); }}>
+              <AccountCircle sx={{ mr: 2 }} />
+              Profile
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>
+              <Logout sx={{ mr: 2 }} />
+              Logout
+            </MenuItem>
+          </Menu>
+        </Box>
       </Toolbar>
     </AppBar>
   );

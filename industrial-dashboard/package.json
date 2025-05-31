@@ -26,6 +26,8 @@
     "express": "^5.1.0",
     "express-session": "^1.18.1",
     "ffmpeg-static": "^5.2.0",
+    "multer": "^2.0.0",
+    "papaparse": "^5.5.3",
     "pg": "^8.16.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -42,7 +44,6 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  
   "eslintConfig": {
     "extends": [
       "react-app",
