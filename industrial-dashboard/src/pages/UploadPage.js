@@ -25,7 +25,7 @@ import {
   Info
 } from '@mui/icons-material';
 import { useUser } from '../context/UserContext';
-import Papa from 'papaparse'; // npm install papaparse
+import Papa from 'papaparse';
 
 export default function UploadPage() {
   const { isSenior } = useUser();
@@ -84,7 +84,7 @@ export default function UploadPage() {
       
       if (result.success) {
         setSelectedFile(null);
-        fetchUploadHistory(); // Refresh history
+        fetchUploadHistory();
       }
     } catch (err) {
       setUploadResult({
@@ -95,38 +95,6 @@ export default function UploadPage() {
       setUploading(false);
     }
   };
-
-  const [editingFile, setEditingFile] = useState(null);
-const [csvData, setCsvData] = useState([]);
-const [editDialogOpen, setEditDialogOpen] = useState(false);
-
-const handleEdit = async (filename) => {
-  // Fetch the CSV file from the server
-  const res = await fetch(`http://localhost:5000/uploads/${encodeURIComponent(filename)}`);
-  const text = await res.text();
-  // Parse CSV
-  const parsed = Papa.parse(text, { header: true });
-  setCsvData(parsed.data);
-  setEditingFile(filename);
-  setEditDialogOpen(true);
-};
-
-const handleSaveEdit = async () => {
-    const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const formData = new FormData();
-    formData.append('csvFile', blob, editingFile);
-
-    await fetch(`http://localhost:5000/uploads/${encodeURIComponent(editingFile)}`, {
-      method: 'PUT',
-      body: formData,
-      credentials: 'include'
-    });
-    setEditDialogOpen(false);
-    fetchUploadHistory(); // Refresh history
-  };
-
-
 
   if (!isSenior) {
     return (
@@ -271,43 +239,41 @@ const handleSaveEdit = async () => {
                           </Box>
                         }
                       />
-                      {/* Add this button */}
                       <Button 
                         variant="outlined" 
                         size="small"
-                        href={`http://localhost:5000${upload.viewUrl}`}
+                        href={`http://localhost:5000/uploads/${encodeURIComponent(upload.filename)}`}
                         target="_blank"
                         sx={{ ml: 2 }}
                       >
                         View
                       </Button>
                       <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    onClick={async () => {
-                      if (window.confirm('Are you sure you want to delete this file?')) {
-                        const res = await fetch(
-                          `http://localhost:5000/api/upload/file/${encodeURIComponent(upload.filename)}`,
-                          { method: 'DELETE', credentials: 'include' }
-                        );
-                        if (res.ok) fetchUploadHistory(); // Refresh list
-                      }
-                    }}
-                    sx={{ ml: 1 }}
-                  >
-                    Delete
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    onClick={() => handleEdit(upload.filename)}
-                    sx={{ ml: 1 }}
-                  >
-                    Edit
-                  </Button>
-
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={async () => {
+                          if (window.confirm('Are you sure you want to delete this file?')) {
+                            const res = await fetch(
+                              `http://localhost:5000/api/upload/file/${encodeURIComponent(upload.filename)}`,
+                              { method: 'DELETE', credentials: 'include' }
+                            );
+                            if (res.ok) fetchUploadHistory();
+                          }
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        onClick={() => window.open(`/edit/${upload.filename}`, '_blank')}
+                        sx={{ ml: 1 }}
+                      >
+                        Edit
+                      </Button>
                     </ListItem>
                   ))}
                 </List>
@@ -363,19 +329,4 @@ const handleSaveEdit = async () => {
       </Grid>
     </Container>
   );
-    // ...JSX for rendering, including a "Save" button:
-  return (
-    <>
-      {/* ...other UI... */}
-      {editDialogOpen && (
-        <div>
-          {/* Your CSV editor UI here */}
-          <button onClick={handleSaveEdit}>Save</button>
-        </div>
-      )}
-    </>
-  );
-
 }
-
-

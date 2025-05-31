@@ -3,6 +3,11 @@ import multer from 'multer';
 import { pool } from '../db.js';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -120,7 +125,7 @@ router.get('/history', async (req, res) => {
     // Attach a direct file view link for each entry
     const uploads = result.rows.map(row => ({
       ...row,
-      viewUrl: `/uploads/${encodeURIComponent(row.filename)}`
+      viewUrl: `/uploads/${encodeURIComponent(row.filename)}` // Changed
     }));
 
     res.json(uploads);
@@ -133,48 +138,96 @@ router.get('/history', async (req, res) => {
 
 
 router.delete('/file/:filename', async (req, res) => {
-  const { filename } = req.params;
-  const filePath = path.join(__dirname, 'uploads', filename); // Adjust path as needed
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, '../uploads', filename); // Absolute path
+    console.log('Trying to delete:', filePath); // Add this line
 
-  // Optional: Only allow senior users to delete
-  if (!req.session.user || req.session.user.role !== 'senior') {
-    return res.status(403).json({ error: 'Access denied' });
-  }
-
-  // Remove from DB first (optional, if you want to track deletions)
-  await pool.query('DELETE FROM file_uploads WHERE filename = $1', [filename]);
-
-  // Remove file from disk
-  fs.unlink(filePath, (err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to delete file' });
+    // Verify user is senior
+    if (!req.session.user || req.session.user.role !== 'senior') {
+      return res.status(403).json({ error: 'Access denied' });
     }
-    res.json({ success: true, message: 'File deleted' });
-  });
+
+    // Delete from database first
+    await pool.query('DELETE FROM file_uploads WHERE filename = $1', [filename]);
+
+    // Delete file from disk
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error('File deletion error:', err);
+        return res.status(500).json({ error: 'File deletion failed' });
+      }
+      res.json({ success: true, message: 'File deleted' });
+    });
+
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ error: 'Deletion failed' });
+  }
+});
+router.delete('/file/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, '../uploads', filename); // Absolute path
+
+    // Verify user is senior
+    if (!req.session.user || req.session.user.role !== 'senior') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Delete from database first
+    await pool.query('DELETE FROM file_uploads WHERE filename = $1', [filename]);
+
+    // Delete file from disk
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error('File deletion error:', err);
+        return res.status(500).json({ error: 'File deletion failed' });
+      }
+      res.json({ success: true, message: 'File deleted' });
+    });
+
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ error: 'Deletion failed' });
+  }
 });
 
 
 router.put('/file/:filename', upload.single('csvFile'), async (req, res) => {
-  const { filename } = req.params;
-  const filePath = path.join(__dirname, 'uploads', filename);
+  try { // <-- Add this
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, '../uploads', filename);
 
-  // Only allow senior users to edit
-  if (!req.session.user || req.session.user.role !== 'senior') {
-    return res.status(403).json({ error: 'Access denied' });
-  }
-
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-
-  // Overwrite the file
-  fs.writeFile(filePath, req.file.buffer, (err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to overwrite file' });
+    // Only allow senior users to edit
+    if (!req.session.user || req.session.user.role !== 'senior') {
+      return res.status(403).json({ error: 'Access denied' });
     }
-    res.json({ success: true, message: 'File updated' });
-  });
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Overwrite the file
+    fs.rename(req.file.path, filePath, (err) => {
+      if (err) {
+        console.error('File update error:', err);
+        return res.status(500).json({ error: 'File update failed' });
+      }
+      // Update database record if needed
+      pool.query(
+        'UPDATE file_uploads SET upload_date = NOW() WHERE filename = $1',
+        [filename]
+      );
+      res.json({ success: true, message: 'File updated' });
+    });
+
+  } catch (err) { // <-- Now properly paired with try
+    console.error('Update error:', err);
+    res.status(500).json({ error: 'Update failed' });
+  }
 });
+
 
 
 export default router;

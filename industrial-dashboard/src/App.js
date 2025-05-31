@@ -13,6 +13,7 @@ import SalesDashboard from './pages/SalesDashboard';
 import ProductionDashboard from './pages/ProductionDashboard';
 import HRDashboard from './pages/HRDashboard';
 import UploadPage from './pages/UploadPage';
+import EditCsvPage from './pages/EditCsvPage'; // Create this component
 
 export default function App() {
   return (
@@ -68,6 +69,9 @@ export default function App() {
                 </ProtectedRoute>
               } 
             />
+
+            <Route path="/edit/:filename" element={<EditCsvPage />} />
+
           </Routes>
         </Router>
       </UserProvider>

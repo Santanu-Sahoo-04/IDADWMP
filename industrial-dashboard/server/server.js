@@ -32,6 +32,13 @@ app.use(cors({
 
 app.use(express.json());
 
+
+
+// Serve static files from /uploads (publicly)
+//app.use('/uploads', express.static('uploads')); 
+//app.use('/uploads', express.static(path.join(process.cwd(), 'server', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Session Configuration
 app.use(session({
   store: new PgSessionStore({
@@ -49,11 +56,6 @@ app.use(session({
     sameSite: 'lax'
   }
 }));
-
-// Serve static files from /uploads (publicly)
-app.use('/uploads', express.static('uploads')); 
-//app.use('/uploads', express.static(path.join(process.cwd(), 'server', 'uploads')));
-//app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Session Validation Middleware
 app.use(async (req, res, next) => {
