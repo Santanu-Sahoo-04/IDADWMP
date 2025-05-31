@@ -115,14 +115,14 @@ export default function Login1() {
       // Full reset
       setEmail('');
       setPassword('');
-      setCaptchaVerified(false);
+      
       setOtpModalOpen(false);
       setOtpError(`❌ ${err.message}. Please restart.`);
-      
       // Reset CAPTCHA
       if (captchaRef.current) {
         captchaRef.current.reset();
       }
+      setCaptchaVerified(false);
     }
   };
 
