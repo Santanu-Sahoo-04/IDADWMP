@@ -1,15 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Welcome.css';
+import SplashScreen from '../components/splashscreen/SplashScreen.js';
 import productionImg from '../assets/images/Production.jpeg';
 import salesImg from '../assets/images/Sales.jpeg';
 import HRImg from '../assets/images/HR.jpg';
 import nalcoImg from '../assets/images/NALCO.png';
 import Spotlight from '../components/spotlight/Spotlight.js';
-import NALCOMap from '../components/Maps/NALCOMap.js';
+import UpdatesCarousel from '../components/UpdatesCarousel/UpdatesCarousel.js'; // ADD THIS
+import NALCOMap from '../components/NALCOMap/NALCOMap.js'; // ADD THIS
 
 export default function Welcome() {
   const navigate = useNavigate();
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    // Show splash for 2 seconds
+    const timer = setTimeout(() => setShowSplash(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showSplash) return <SplashScreen />;
 
   return (
     <div className="welcome-container">
@@ -19,8 +30,15 @@ export default function Welcome() {
         <img src={nalcoImg} alt="Company Logo" className="company-logo" />
         <div className="project-title">INDUSTRIAL ANALYTICS</div>
         <div className="project-subtitle">Empowering Data-Driven Decisions</div>
-
       </header>
+
+      <div className="welcome-main-layout">
+        {/* LEFT: Updates Carousel */}
+        <div className="welcome-left-sidebar">
+          <UpdatesCarousel />
+        </div>
+
+      <div className="welcome-center">
       <div className="welcome-body">
         <div className="welcome-desc">
           This portal empowers NALCO with secure, role-based analytics for Sales, HR, and Production.
@@ -58,7 +76,14 @@ export default function Welcome() {
         </div>
       </div>
       </div>
-      
     </div>
+
+    {/* RIGHT: NALCO Map */}
+        <div className="welcome-right-sidebar">
+          <NALCOMap />
+        </div>
+      </div>
+    </div>
+    
   );
 }

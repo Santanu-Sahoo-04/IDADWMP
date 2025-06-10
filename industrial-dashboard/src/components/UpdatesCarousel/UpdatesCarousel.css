@@ -1,0 +1,124 @@
+.updates-carousel {
+  width: 280px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.updates-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.updates-card {
+  width: 100%;
+  min-height: 200px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-left: 4px solid #1976d2;
+}
+
+.card-year {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 6px;
+}
+
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.highlights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.highlight-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 6px;
+  border-left: 3px solid;
+}
+
+.highlight-item.production {
+  background: #e8f5e8;
+  border-left-color: #4caf50;
+}
+
+.highlight-item.sales {
+  background: #fff3e0;
+  border-left-color: #f9a825;
+}
+
+.highlight-item.hr {
+  background: #e3f2fd;
+  border-left-color: #2196f3;
+}
+
+.highlight-type {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.highlight-text {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: #555;
+}
+
+.carousel-indicators {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: #ccc;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.indicator.active {
+  background: #1976d2;
+  transform: scale(1.2);
+}
+
+.play-pause-btn {
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.play-pause-btn:hover {
+  background: #155fa0;
+}

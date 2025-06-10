@@ -1,0 +1,54 @@
+/* src/components/SplashScreen.css */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeOutSplash 0.7s 1.5s forwards;
+}
+
+.splash-content {
+  text-align: center;
+  animation: fadeInSplash 0.8s;
+}
+
+.splash-logo {
+  width: 80px;
+  margin-bottom: 18px;
+  opacity: 0.8;
+}
+
+.splash-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #888;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.splash-hindi, .splash-english {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  opacity: 0.8;
+}
+
+.splash-tagline {
+  font-size: 1.22rem;
+  color: #444;
+  margin-top: 10px;
+  opacity: 0.9;
+}
+
+@keyframes fadeInSplash {
+  from { opacity: 0; transform: translateY(30px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+
+@keyframes fadeOutSplash {
+  to { opacity: 0; pointer-events: none; }
+}

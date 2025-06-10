@@ -1,3 +1,37 @@
+/* ADD TO THE END OF YOUR EXISTING Welcome.css */
+
+/* THREE-COLUMN LAYOUT */
+.welcome-main-layout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 32px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+.welcome-left-sidebar {
+  flex: 0 0 300px;
+  display: flex;
+  justify-content: center;
+}
+
+.welcome-center {
+  flex: 0 0 420px;
+  display: flex;
+  justify-content: center;
+}
+
+.welcome-right-sidebar {
+  flex: 0 0 300px;
+  display: flex;
+  justify-content: center;
+}
+
+
+
 .welcome-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #e6ecf5 0%, #f5f7fa 100%);
@@ -235,7 +269,22 @@
 }
 
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+
+    .welcome-main-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  
+  .welcome-left-sidebar,
+  .welcome-center,
+  .welcome-right-sidebar {
+    flex: none;
+    width: 100%;
+    max-width: 420px;
+  }
+
   .photo-holder-section {
     flex-direction: column;
     align-items: center;

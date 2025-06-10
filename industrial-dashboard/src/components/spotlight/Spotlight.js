@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import './Spotlight.css';
+// import nalcoImg from '../assets/images/NALCO.png';
+// import nalcoImg from '../assets/images/NALCO.png';
+// import nalcoImg from '../assets/images/NALCO.png';
 
 const spotlightData = [
   {
