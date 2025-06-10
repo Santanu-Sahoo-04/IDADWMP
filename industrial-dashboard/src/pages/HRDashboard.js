@@ -1,58 +1,26 @@
 /*
-import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { mockHR } from '../mockData.js';
+import TableauDashboard from '../components/TableauDashboard';
 
 export default function HRDashboard() {
-  return (
-    <div style={{ padding: '20px' }}>
-      <h1>HR Report</h1>
-      <BarChart width={600} height={400} data={mockHR}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="employee" />
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="salary" fill="#82ca9d" />
-      </BarChart>
-    </div>
-  );
+  return <TableauDashboard department="hr" title="HR Dashboard" />;
 }
 */
 
+// src/pages/HRDashboard.js
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { Button, Typography } from '@mui/material';
-import { mockHR } from '../mockData';
 
 export default function HRDashboard() {
-  const role = localStorage.getItem('role');
-  const email = localStorage.getItem('email');
-  const isGM = role === 'GM';
-
-  let allowedDept = null;
-  if (isGM && email) {
-    const deptCode = email.split('@')[0].slice(-1);
-    allowedDept = { '1': 'production', '2': 'sales', '3': 'hr' }[deptCode];
-  }
-
-  const canEdit = !isGM || allowedDept === 'hr';
-
   return (
-    <div style={{ padding: '20px' }}>
-      <Typography variant="h4">HR Report</Typography>
-      <BarChart width={600} height={400} data={mockHR}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="employee" />
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="salary" fill="#82ca9d" />
-      </BarChart>
-      {canEdit && (
-        <div style={{ marginTop: 24 }}>
-          <Button variant="contained" color="primary" style={{ marginRight: 8 }}>Upload Data</Button>
-          <Button variant="contained" color="secondary">AI Analysis</Button>
-        </div>
-      )}
+    <div>
+      <h1>HR Dashboard</h1>
+      {/* Paste the tableau-viz tag here */}
+      
+      <tableau-viz
+        src="https://public.tableau.com/views/HR_17486901578370/HRANALYTICSDASHBOARD?:language=en-GB&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
+        toolbar="bottom"
+        hide-tabs
+        style={{ width: '100%', height: '700px', border: '1px solid #ccc', borderRadius: 4 }}
+      ></tableau-viz>
     </div>
   );
 }

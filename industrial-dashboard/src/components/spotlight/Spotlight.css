@@ -1,0 +1,196 @@
+.spotlight-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:  rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 2s ease;
+}
+
+.spotlight-container {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 600px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.2s ease;
+}
+
+.spotlight-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.spotlight-close:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.spotlight-content {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 500px;
+}
+
+.spotlight-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.spotlight-nav:hover {
+  background: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.spotlight-nav.prev {
+  left: 20px;
+}
+
+.spotlight-nav.next {
+  right: 20px;
+}
+
+.spotlight-slide {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.spotlight-image {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.spotlight-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spotlight-info {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.spotlight-info h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.spotlight-info p {
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.spotlight-date {
+  font-size: 0.9rem;
+  color: #f9a825;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.spotlight-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  background: #f8fafc;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  background: #ccc;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.indicator.active {
+  background: #1976d2;
+  transform: scale(1.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .spotlight-slide {
+    flex-direction: column;
+  }
+  
+  .spotlight-info {
+    padding: 20px;
+  }
+  
+  .spotlight-info h3 {
+    font-size: 1.4rem;
+  }
+
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-500px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+.fade-in {
+  animation: fadeInDown 1s cubic-bezier(0.23, 1, 0.32, 1);
+}

@@ -44,6 +44,10 @@ async function init() {
       );
     `);
 
+
+
+
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (
         sid VARCHAR NOT NULL PRIMARY KEY,
@@ -75,10 +79,10 @@ async function init() {
       ['Shri Anuj Kumar Panda', 'anuj.panda@company.co.in', 'AnujP@1234!', 'senior', 1, 2, 'GGM (Production)', 'Damanjodi'],
       ['Shri Niranjan Samal', 'niranjan.samal@company.co.in', 'Niranjan#Mine7', 'senior', 1, 2, 'ED (Mines & Refinery)', 'Damanjodi'],
       ['Shri Sadashiv Samantaray', 'sadashiv.samantaray@company.co.in', 'Sada$Com2024', 'senior', 2, 1, 'Director (Commercial)', 'All'],
-      ['Shri J Rajesh Kapoor', 'edmktg@company.co.in', 'Rajesh@Mktg!', 'senior', 2, 1, 'ED (Marketing)', 'All'],
-      ['Shri Gautam Mohapatra', 'gautam.mohapatra@company.co.in', 'GautamMktg#55', 'senior', 2, 1, 'GGM (Marketing)', 'All'],
+      ['Shri J Rajesh Kapoor', 'edmktg@company.co.in', 'Rajesh@Mktg!', 'senior', 2, 1, 'ED (Marketing)', 'Damanjodi'],
+      ['Shri Gautam Mohapatra', 'gautam.mohapatra@company.co.in', 'GautamMktg#55', 'senior', 2, 1, 'GGM (Marketing)', 'Damanjodi'],
       ['Dr. Tapas Kumar Pattanayak', 'tapas.pattanayak@company.co.in', 'TapasHR@321', 'senior', 3, 1, 'Director (HR)', 'All'],
-      ['Shri Himanshu Sekhar Pradhan', 'himanshu.pradhan@company.co.in', 'Himanshu!HA9', 'senior', 3, 1, 'GGM (H&A)', 'All'],
+      ['Shri Himanshu Sekhar Pradhan', 'himanshu.pradhan@company.co.in', 'Himanshu!HA9', 'senior', 3, 1, 'GGM (H&A)', 'Damanjodi'],
     ];
 
     // Map to store email -> user_id for reporting_to
