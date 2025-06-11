@@ -1,3 +1,18 @@
+/* Add these at the top */
+:root {
+  --app-font-size: 16px;
+}
+
+html {
+  font-size: var(--app-font-size);
+}
+
+body {
+  font-size: 1rem;
+  transition: font-size 0.2s ease;
+}
+
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,4 +25,40 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Remove any default backgrounds */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Override any hardcoded backgrounds */
+.welcome-container,
+.main-content,
+.app-container {
+  background: transparent !important;
+}
+
+.dark-keyboard .hg-button {
+  background: #FFD700 !important;  /* Yellow */
+  color: #000 !important;          /* Black text */
+  border: 1px solid #000 !important;
+}
+
+.dark-keyboard .hg-button:active {
+  background: #FFE44D !important;  /* Lighter yellow on press */
 }

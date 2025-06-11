@@ -1,30 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import './Spotlight.css';
-// import nalcoImg from '../assets/images/NALCO.png';
-// import nalcoImg from '../assets/images/NALCO.png';
-// import nalcoImg from '../assets/images/NALCO.png';
+import s1Img from '../../assets/images/s1.jpg';
+import s2Img from '../../assets/images/s2.jpg';
+import s3Img from '../../assets/images/s3.jpg';
 
 const spotlightData = [
   {
     id: 1,
     title: "NALCO Achieves Record Production",
     description: "Highest ever bauxite excavation and aluminium production in FY 2024-25",
-    image: "/images/spotlight/slide1.jpg",
+    image: s1Img,
     date: "June 2025"
   },
   {
     id: 2,
     title: "Green Energy Initiative",
     description: "Leading PSU in renewable energy generation with 198 MW wind power",
-    image: "/images/spotlight/slide2.jpg",
+    image: s2Img ,
     date: "May 2025"
   },
   {
     id: 3,
     title: "Digital Transformation",
     description: "Advanced analytics and dashboard system for enhanced decision making",
-    image: "/images/spotlight/slide3.jpg",
+    image: s3Img ,
     date: "June 2025"
   }
 ];

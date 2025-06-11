@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Keyboard from 'react-simple-keyboard';
 import 'react-simple-keyboard/build/css/index.css';
 
-export default function VirtualKeyboard({ value, onChange }) {
+export default function VirtualKeyboard({ value, onChange, isDarkMode  }) {
   const [keyboardValue, setKeyboardValue] = useState(value);
 
   // Sync with parent value changes
@@ -23,7 +23,16 @@ export default function VirtualKeyboard({ value, onChange }) {
     onChange(newValue);
   };
 
+  // Add style object for dark mode
+  const keyboardStyle = {
+    background: isDarkMode ? '#23293a' : '#fff',
+    color: isDarkMode ? '#00008B' : '#222',
+    borderRadius: '8px',
+    padding: '8px'
+  };
+
   return (
+    <div className={isDarkMode ? "dark-keyboard" : ""}>
     <Keyboard
       layout={{
         default: [
@@ -39,5 +48,6 @@ export default function VirtualKeyboard({ value, onChange }) {
       display={{ "{bksp}": "⌫" }}
       value={keyboardValue}
     />
+    </div>
   );
 }

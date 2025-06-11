@@ -1,0 +1,81 @@
+/* TopBar.css */
+.top-bar {
+  background: linear-gradient(90deg, #0d47a1 0%, #1565c0 100%);
+  color: white;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  position: sticky;
+  top: 0;
+  width: 100%;
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.top-bar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 2rem;
+  padding: 0 20px;
+  align-items: center;
+}
+
+/* Font Controls */
+.font-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.font-control-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.font-control-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.font-control-active {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.4);
+}
+
+.font-control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Existing Theme Styles */
+.control-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .top-bar {
+  background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-bottom-color: rgba(255,255,255,0.05);
+}
+
+/* Dark Mode Font Controls */
+[data-theme="dark"] .font-control-btn {
+  background: rgba(0,0,0,0.2);
+  border-color: rgba(255,255,255,0.1);
+}
+
+[data-theme="dark"] .font-control-btn:hover {
+  background: rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .font-control-active {
+  background: rgba(0,0,0,0.4);
+}

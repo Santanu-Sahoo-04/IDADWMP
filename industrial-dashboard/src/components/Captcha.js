@@ -1,5 +1,5 @@
 import React, { forwardRef, useState, useEffect, useRef, useImperativeHandle } from 'react';
-
+import { useTheme } from '@mui/material/styles'; // Add this import
 import { Typography, TextField, IconButton, Button, CircularProgress } from '@mui/material';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -27,6 +27,8 @@ function describeChar(char) {
 }
 
 const Captcha = forwardRef(({ onVerified, frozen = false }, ref) => {
+  const theme = useTheme(); // Get theme from MUI
+  const isDarkMode = theme.palette.mode === 'dark';
   const [captchaText, setCaptchaText] = useState('');
   const [userInput, setUserInput] = useState('');
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -108,7 +110,17 @@ const Captcha = forwardRef(({ onVerified, frozen = false }, ref) => {
 
   return (
     <div style={{ margin: '20px 0', textAlign: 'center' }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h6" gutterBottom 
+      sx={{ 
+        fontFamily: 'monospace',
+        letterSpacing: '8px',
+        userSelect: 'none',
+        mb: 2,
+        padding: '10px',
+        backgroundColor: isDarkMode ? '#23293a' : '#dae6dd', // Use theme-based dark mode
+        borderRadius: '4px',
+        color: isVerified ? 'green' : (isDarkMode ? '#09998B' : 'inherit') // Dark blue text in dark mode
+      }}>
         CAPTCHA Verification
         <IconButton 
           onClick={playAudio} 
@@ -139,9 +151,9 @@ const Captcha = forwardRef(({ onVerified, frozen = false }, ref) => {
         userSelect: 'none',
         mb: 2,
         padding: '10px',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: isDarkMode ? '#23293a' : '#dae6dd', // Use theme-based dark mode
         borderRadius: '4px',
-        color: isVerified ? 'green' : 'inherit'
+        color: isVerified ? 'green' : (isDarkMode ? '#09998B' : 'inherit') // Dark blue text in dark mode
       }}>
         {isVerified ? (
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>

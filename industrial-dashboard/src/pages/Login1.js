@@ -6,7 +6,7 @@ import VirtualKeyboard from '../components/VirtualKeyboard';
 import Captcha from '../components/Captcha';
 import OtpModal from '../components/OtpModal';
 import { useUser } from '../context/UserContext';
-
+import { useTheme } from '@mui/material/styles';
 
 export default function Login1() {
   const [email, setEmail] = useState('');
@@ -25,7 +25,8 @@ export default function Login1() {
   const navigate = useNavigate();
   const captchaRef = useRef(null);
   const { login } = useUser();
-
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark'; 
   
 
 
@@ -208,13 +209,14 @@ export default function Login1() {
           <VirtualKeyboard
             value={activeField === 'email' ? email : password}
             onChange={handleVirtualKeyboardChange}
+            isDarkMode={isDarkMode}
           />
         )}
 
         {/* CAPTCHA Component */}
         <Box sx={{ mt: 2 }}>
           <Captcha 
-            onVerified={() => setCaptchaVerified(true)}
+            onVerified={setCaptchaVerified}
             frozen={captchaVerified}
             ref={captchaRef}
           />

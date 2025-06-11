@@ -10,6 +10,9 @@ import Spotlight from '../components/spotlight/Spotlight.js';
 import UpdatesCarousel from '../components/UpdatesCarousel/UpdatesCarousel.js'; // ADD THIS
 import NALCOMap from '../components/NALCOMap/NALCOMap.js'; // ADD THIS
 
+import OperationsSection from '../components/OperationsSection/OperationsSection.js'; // ADD THIS
+import GoToTop from '../components/GoToTop/GoToTop.js'; // ADD THIS
+
 export default function Welcome() {
   const navigate = useNavigate();
   const [showSplash, setShowSplash] = useState(true);
@@ -82,8 +85,13 @@ export default function Welcome() {
         <div className="welcome-right-sidebar">
           <NALCOMap />
         </div>
-      </div>
     </div>
-    
+      
+      {/* ADD OPERATIONS SECTION */}
+      <OperationsSection />
+
+      {/* ADD GO TO TOP BUTTON */}
+      <GoToTop />
+    </div>
   );
 }

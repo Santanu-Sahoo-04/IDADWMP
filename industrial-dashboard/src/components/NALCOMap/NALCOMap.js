@@ -6,14 +6,14 @@ const nalcoUnits = [
     name: "Panchpatmali Bauxite Mines",
     type: "mining",
     location: "Koraput, Odisha",
-    coordinates: { left: "51%", top: "61%" } // ≈50 km east of Damanjodi
+    coordinates: { left: "50%", top: "62%" } // ≈50 km east of Damanjodi
   },
   {
     id: 2,
     name: "Alumina Refinery",
     type: "refinery",
     location: "Damanjodi, Odisha",
-    coordinates: { left: "50%", top: "61%" } // Reference point
+    coordinates: { left: "49.5%", top: "62.5%" } // Reference point
   },
   {
     id: 3,
@@ -34,7 +34,7 @@ const nalcoUnits = [
     name: "Utkal-D Coal Mine",
     type: "mining",
     location: "Jharsuguda, Odisha",
-    coordinates: { left: "54.5%", top: "55.5%" } // ≈200 km northwest of Damanjodi
+    coordinates: { left: "53%", top: "54%" } // ≈200 km northwest of Damanjodi
   }
 ];
 

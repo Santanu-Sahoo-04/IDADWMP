@@ -122,3 +122,8 @@
 .play-pause-btn:hover {
   background: #155fa0;
 }
+
+[data-theme="dark"] .highlight-item .highlight-type {
+  color: #b71c1c !important;   /* Strong dark red */
+  font-weight: bold;
+}
