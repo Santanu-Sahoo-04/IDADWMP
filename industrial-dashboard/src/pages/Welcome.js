@@ -13,9 +13,12 @@ import NALCOMap from '../components/NALCOMap/NALCOMap.js'; // ADD THIS
 import OperationsSection from '../components/OperationsSection/OperationsSection.js'; // ADD THIS
 import GoToTop from '../components/GoToTop/GoToTop.js'; // ADD THIS
 
+import { useTranslation } from 'react-i18next'; // ADD THIS
+
 export default function Welcome() {
   const navigate = useNavigate();
   const [showSplash, setShowSplash] = useState(true);
+  const { t } = useTranslation(); // ADD THIS LINE
 
   useEffect(() => {
     // Show splash for 2 seconds
@@ -31,8 +34,11 @@ export default function Welcome() {
 
       <header className="welcome-header">
         <img src={nalcoImg} alt="Company Logo" className="company-logo" />
-        <div className="project-title">INDUSTRIAL ANALYTICS</div>
-        <div className="project-subtitle">Empowering Data-Driven Decisions</div>
+        <div className="project-title">{t('welcome.title')}</div>
+        <div className="project-subtitle">{t('welcome.subtitle')}</div>
+        {/* <div className="project-title">INDUSTRIAL ANALYTICS</div>
+        <div className="project-subtitle">Empowering Data-Driven Decisions</div> */}
+         
       </header>
 
       <div className="welcome-main-layout">

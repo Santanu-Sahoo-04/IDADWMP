@@ -1,0 +1,24 @@
+{
+  "welcome": {
+    "title": "INDUSTRIAL ANALYTICS",
+    "subtitle": "Empowering Data-Driven Decisions",
+    "description": "This portal empowers NALCO with secure, role-based analytics for Sales, HR, and Production.",
+    "seniorLogin": "Senior Management Login",
+    "juniorLogin": "Junior Management Login",
+    "passwordRules": "Password must be at least 8 characters, include letters and numbers/symbols, and have no spaces."
+  },
+  "operations": {
+    "title": "Our Operations",
+    "subtitle": "As one of the largest integrated primary producer of aluminium in Asia, NALCO's presence encompasses the entire value chain from bauxite mining, alumina refining, aluminium smelting, power generation to downstream products."
+  },
+  "topbar": {
+    "fontSize": "Font Size",
+    "theme": "Theme",
+    "language": "हिंदी"
+  },
+  "dashboards": {
+    "sales": "Sales Dashboard",
+    "hr": "HR Dashboard",
+    "production": "Production Dashboard"
+  }
+}

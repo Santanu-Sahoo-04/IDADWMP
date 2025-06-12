@@ -1,11 +1,21 @@
 import React from 'react';
 import { Container, Box, IconButton, Typography } from '@mui/material';
-import { MdTextDecrease, MdTextIncrease, MdTextFields, MdLightMode, MdDarkMode } from 'react-icons/md';
+import { MdTextDecrease, MdTextIncrease, MdTextFields, MdLightMode, MdDarkMode,   MdLanguage } from 'react-icons/md';
+import { useTranslation } from 'react-i18next'; // ADD THIS IMPORT
 import { useFontSize } from '../../contexts/FontSizeContext';
 import './TopBar.css';
 
 export default function TopBar({ isDarkMode, setIsDarkMode }) {
   const { fontLevel, increase, decrease, reset, canIncrease, canDecrease } = useFontSize();
+
+  // ADD THIS - Translation hook
+  const { t, i18n } = useTranslation();
+  
+  // ADD THIS - Language toggle function
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'hi' : 'en';
+    i18n.changeLanguage(newLang);
+  };
 
   return (
     <Box className="top-bar" sx={{ 
@@ -52,6 +62,29 @@ export default function TopBar({ isDarkMode, setIsDarkMode }) {
               {fontLevel > 0 ? `+${fontLevel}` : fontLevel}
             </Typography>
           )}
+        </Box>
+
+        {/* ADD THIS ENTIRE SECTION - Language Toggle */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="caption" sx={{ opacity: 0.9 }}>Language:</Typography>
+          <IconButton 
+            size="small" 
+            onClick={toggleLanguage}
+            sx={{ 
+              color: 'white',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '4px',
+              px: 1,
+              '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+            }}
+            title={`Switch to ${i18n.language === 'en' ? 'Hindi' : 'English'}`}
+          >
+            <MdLanguage sx={{ mr: 0.5, fontSize: '1rem' }} />
+            <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
+              {t('topbar.language')}
+            </Typography>
+          </IconButton>
         </Box>
 
         {/* Theme Toggle */}

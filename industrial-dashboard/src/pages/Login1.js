@@ -7,6 +7,7 @@ import Captcha from '../components/Captcha';
 import OtpModal from '../components/OtpModal';
 import { useUser } from '../context/UserContext';
 import { useTheme } from '@mui/material/styles';
+import './LoginForm.css';
 
 export default function Login1() {
   const [email, setEmail] = useState('');

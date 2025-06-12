@@ -23,6 +23,8 @@ import HRDashboard from './pages/HRDashboard';
 import UploadPage from './pages/UploadPage';
 import EditCsvPage from './pages/EditCsvPage';
 
+import './i18n';
+
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   useEffect(() => {
