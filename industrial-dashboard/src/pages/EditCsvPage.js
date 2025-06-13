@@ -5,8 +5,8 @@ import { Button, Typography, Container, Box, CircularProgress, Alert, Paper, Tex
 import { useUser } from '../context/UserContext';
 
 export default function EditCsvPage() {
-  const { filename } = useParams(); // This 'filename' is the original active file's filename on disk
-  const { isSenior, loading: userContextLoading } = useUser();
+  const { filename } = useParams();
+  const { isSenior, loading: userContextLoading } = useUser(); // Get loading state from UserContext
   const [csvData, setCsvData] = useState([]);
   const [loading, setLoading] = useState(true); // For file content loading
   const [error, setError] = useState(null);
@@ -22,26 +22,25 @@ export default function EditCsvPage() {
     // Now, perform the authorization check
     if (!isSenior) {
       setError('Access Denied. This page is for Senior Management only.');
-      setLoading(false); // Stop file content loading, show error
-      // Optional: you can close the window after a delay if unauthorized
-      // setTimeout(() => window.close(), 2000);
+      setLoading(false); // Stop loading, show error
+      // Optional: if you want to immediately close the tab if unauthorized
+      // setTimeout(() => window.close(), 2000); // Give user a moment to see the message
       return;
     }
-
+    
     // If authenticated and senior, then fetch the file content
     fetchCsvData();
-  }, [filename, isSenior, userContextLoading]);
+  }, [filename, isSenior, userContextLoading]); // Add userContextLoading to dependencies
 
   const fetchCsvData = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch the file content from the uploads directory
-      const res = await fetch(`http://localhost:5000/uploads/${encodeURIComponent(filename)}`);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch file content: ${res.statusText || res.status}`);
+      const response = await fetch(`http://localhost:5000/uploads/${encodeURIComponent(filename)}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file content: ${response.statusText}`);
       }
-      const text = await res.text();
+      const text = await response.text();
       const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
       if (parsed.errors.length > 0) {
         console.error("PapaParse errors:", parsed.errors);
@@ -52,7 +51,7 @@ export default function EditCsvPage() {
       setCsvData(parsed.data);
     } catch (err) {
       console.error('Error loading CSV:', err);
-      setError('Failed to load file content. Please ensure it is a valid CSV file. ' + err.message);
+      setError('Failed to load file content. Please ensure it is a valid CSV file.');
     } finally {
       setLoading(false);
     }
@@ -65,17 +64,16 @@ export default function EditCsvPage() {
       const csv = Papa.unparse(csvData);
       const blob = new Blob([csv], { type: 'text/csv' });
       const formData = new FormData();
-      formData.append('dataFile', blob, filename); // Use 'dataFile' as backend expects
+      formData.append('dataFile', blob, filename);
 
-      // Send the edited file to the backend's PUT route for pending edit submission
       const res = await fetch(
         `http://localhost:5000/api/upload/file/${encodeURIComponent(filename)}`,
         { method: 'PUT', body: formData, credentials: 'include' }
       );
 
       if (res.ok) {
-        // If successful, signal the opener window to refresh its history/file list
         if (window.opener) {
+          // This ensures the parent window's functions are called
           if (typeof window.opener.fetchFiles === 'function') {
             window.opener.fetchFiles();
           }
@@ -83,7 +81,7 @@ export default function EditCsvPage() {
             window.opener.fetchActivityLog();
           }
         }
-        window.close(); // Close the current editing window
+        window.close();
       } else {
         const errorData = await res.json();
         setError(errorData.error || 'Failed to save changes.');
@@ -114,11 +112,11 @@ export default function EditCsvPage() {
 
   // If senior and file content is still loading
   if (loading) return <Container sx={{ mt: 4 }}><CircularProgress /><Typography>Loading file content...</Typography></Container>;
-
+  
   // If senior and file content failed to load
   if (error) return <Container maxWidth="md" sx={{ mt: 4 }}><Alert severity="error">{error}</Alert></Container>;
-
-  // If senior and no data in CSV after loading
+  
+  // If senior and no data in CSV
   if (csvData.length === 0 && !loading && !error) return <Container maxWidth="md" sx={{ mt: 4 }}><Alert severity="info">No data found in CSV or file is empty.</Alert></Container>;
 
 

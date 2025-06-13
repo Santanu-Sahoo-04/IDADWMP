@@ -1,10 +1,11 @@
+// backend/routes/upload.js
 import express from 'express';
 import multer from 'multer';
 import { pool } from '../db.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { v4 as uuidv4 } from 'uuid'; // CRITICAL: Ensure this is imported for UUID generation
+import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,10 +26,9 @@ const storage = multer.diskStorage({
     }
     cb(null, uploadDir);
   },
-  // CRITICAL FIX: Generate truly unique filenames using UUID here as well
   filename: (req, file, cb) => {
     const fileExtension = path.extname(file.originalname);
-    const uniqueFilename = `${uuidv4()}${fileExtension}`; // e.g., 'a1b2c3d4-e5f6-7890-1234-567890abcdef.csv'
+    const uniqueFilename = `${uuidv4()}${fileExtension}`;
     cb(null, uniqueFilename);
   }
 });
@@ -64,7 +64,8 @@ const logFileAction = async (client, fileId, actionType, actionByUserId, actionB
 
 router.post('/file', upload.single('dataFile'), async (req, res) => {
   const client = await pool.connect();
-  let uploaderDesignation = null;
+  // uploaderDesignation and uploaderDeptId are used only within this route's try block,
+  // so their scope is fine as defined below.
   try {
     await client.query('BEGIN');
 
@@ -76,6 +77,10 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
       });
     }
 
+    const userId = req.session.user.id;
+    const uploaderDeptId = req.session.user.departmentId;
+    const uploaderDesignation = req.session.user.designation;
+
     if (!req.file) {
       await client.query('ROLLBACK');
       return res.status(400).json({
@@ -84,8 +89,6 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
       });
     }
 
-    const uploaderDeptId = req.session.user.departmentId;
-    uploaderDesignation = req.session.user.designation;
     const isCMD = uploaderDesignation && uploaderDesignation.toLowerCase() === 'cmd';
 
     let targetDepartmentId = uploaderDeptId;
@@ -115,10 +118,10 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING upload_id;
     `, [
-      req.file.filename, // This will be the UUID filename from multer
+      req.file.filename,
       req.file.originalname,
       req.file.path,
-      req.session.user.id,
+      userId,
       recordsProcessed,
       targetDepartmentId,
       'active',
@@ -131,7 +134,7 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
       client,
       uploadedFileId,
       'upload',
-      req.session.user.id,
+      userId,
       uploaderDeptId,
       targetDepartmentId,
       {
@@ -139,7 +142,7 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
         original_name: req.file.originalname,
         file_mimetype: req.file.mimetype,
         uploaded_by_name: req.session.user.name,
-        uploaded_by_designation: uploaderDesignation,
+        uploaded_by_designation: uploaderDesignation, // uploaderDesignation is defined here
       }
     );
 
@@ -233,6 +236,9 @@ router.get('/files', async (req, res) => {
 
 router.delete('/file/:filename', async (req, res) => {
   const client = await pool.connect();
+  let userId = null;
+  let userDesignation = null;
+  let userDepartmentId = null;
   try {
     await client.query('BEGIN');
 
@@ -244,9 +250,10 @@ router.delete('/file/:filename', async (req, res) => {
       return res.status(403).json({ error: 'Access denied. Senior management only.' });
     }
 
-    const userId = req.session.user.id;
-    const userDesignation = req.session.user.designation;
-    const userDepartmentId = req.session.user.departmentId;
+    // Capture user details immediately after session check
+    userId = req.session.user.id;
+    userDesignation = req.session.user.designation;
+    userDepartmentId = req.session.user.departmentId;
     const isCMD = userDesignation && userDesignation.toLowerCase() === 'cmd';
 
     const fileRes = await client.query(`
@@ -306,7 +313,7 @@ router.delete('/file/:filename', async (req, res) => {
         filename: filename,
         original_name: fileDetails.original_name,
         deleted_by_name: req.session.user.name,
-        deleted_by_designation: userDesignation,
+        deleted_by_designation: userDesignation, // userDesignation is defined here
         file_status_before_delete: fileDetails.status
       }
     );
@@ -327,11 +334,13 @@ router.delete('/file/:filename', async (req, res) => {
 router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res) => {
   const client = await pool.connect();
   let newFile = null;
-  let uploaderDesignation = null;
+  let userId = null;
+  let userDesignation = null;
+  let userDepartmentId = null;
   try {
     await client.query('BEGIN');
 
-    const { originalFilename } = req.params; // This originalFilename is the UUID filename of the active file
+    const { originalFilename } = req.params;
     newFile = req.file;
 
     if (!req.session.user || req.session.user.role !== 'senior') {
@@ -344,16 +353,18 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
       return res.status(400).json({ error: 'No new file uploaded for update.' });
     }
 
-    const userId = req.session.user.id;
-    uploaderDesignation = req.session.user.designation;
-    const userDepartmentId = req.session.user.departmentId;
-    const isCMD = uploaderDesignation && uploaderDesignation.toLowerCase() === 'cmd';
+    // Capture user details immediately after session check
+    userId = req.session.user.id;
+    userDesignation = req.session.user.designation;
+    userDepartmentId = req.session.user.departmentId;
+
+    const isCMD = userDesignation && userDesignation.toLowerCase() === 'cmd';
 
     const originalFileRes = await client.query(`
       SELECT upload_id, department_id, original_name, file_path, status
       FROM file_uploads
       WHERE filename = $1 AND status = 'active'
-    `, [originalFilename]); // Find active file by its UUID filename
+    `, [originalFilename]);
 
     if (originalFileRes.rowCount === 0) {
       if (newFile && fs.existsSync(newFile.path)) fs.unlinkSync(newFile.path);
@@ -399,7 +410,7 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
              uploaded_by = $4, upload_date = NOW(), approval_status = 'pending'
              WHERE upload_id = $5
              RETURNING upload_id;`,
-            [newFile.filename, // This will be the UUID filename from multer
+            [newFile.filename,
              newFile.originalname,
              newFile.path,
              userId,
@@ -418,7 +429,7 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
                 new_pending_original_name: newFile.originalname,
                 new_pending_filename_on_disk: newFile.filename,
                 edited_by_name: req.session.user.name,
-                edited_by_designation: userDesignation,
+                edited_by_designation: userDesignation, // userDesignation is defined here
             },
             null, null, pendingFileId
         );
@@ -432,7 +443,7 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING upload_id;
         `, [
-            newFile.filename, // This will be the UUID filename from multer
+            newFile.filename,
             newFile.originalname,
             newFile.path,
             userId,
@@ -716,19 +727,19 @@ router.post('/file-action/:activeFileId', async (req, res) => {
       client,
       activeFileId,
       logActionType,
-      userId,
-      userDepartmentId,
+      userId, // userId is defined here
+      userDepartmentId, // userDepartmentId is defined here
       activeFileDetails.department_id,
       {
         file_original_name: activeFileDetails.original_name,
         action: action,
         acted_by_name: req.session.user.name,
-        acted_by_designation: userDesignation,
+        acted_by_designation: userDesignation, // userDesignation is defined here
         pending_file_id_acted_on: pendingFileDetails.upload_id,
       },
       userId,
       notes,
-      null // CRITICAL FIX: Pass NULL here to avoid FK violation
+      null
     );
     console.log(`[FILE_ACTION] Logged action ${logActionType}`);
 
@@ -758,6 +769,7 @@ router.get('/file-content/:fileId', async (req, res) => {
     const userRole = req.session.user.role;
     const userDesignation = req.session.user.designation;
     const userDepartmentId = req.session.user.departmentId;
+
     const isCMD = userDesignation && userDesignation.toLowerCase() === 'cmd';
 
     const fileRes = await pool.query(`
