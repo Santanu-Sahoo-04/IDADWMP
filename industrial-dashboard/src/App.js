@@ -25,6 +25,8 @@ import EditCsvPage from './pages/EditCsvPage';
 
 import './i18n';
 
+import UserManagementPage from './pages/UserManagementPage'; 
+
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   useEffect(() => {
@@ -61,36 +63,48 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route 
-                  path="/sales" 
-                  element={
-                    <ProtectedRoute>
-                      <SalesDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route 
-                  path="/production" 
-                  element={
-                    <ProtectedRoute>
-                      <ProductionDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route 
-                  path="/hr" 
-                  element={
-                    <ProtectedRoute>
-                      <HRDashboard />
-                    </ProtectedRoute>
-                  }
-                />
+
+<Route
+  path="/sales"
+  element={
+    <ProtectedRoute isDepartmentDashboard={true}>
+      <SalesDashboard />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/production"
+  element={
+    <ProtectedRoute isDepartmentDashboard={true}>
+      <ProductionDashboard />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/hr"
+  element={
+    <ProtectedRoute isDepartmentDashboard={true}>
+      <HRDashboard />
+    </ProtectedRoute>
+  }
+/>
+
+
                 {/* Senior Management Only */}
                 <Route 
                   path="/upload" 
                   element={
                     <ProtectedRoute requiredRole="senior">
                       <UploadPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/user-management"
+                  element={
+                    <ProtectedRoute requiredRole="senior">
+                      <UserManagementPage />
                     </ProtectedRoute>
                   }
                 />

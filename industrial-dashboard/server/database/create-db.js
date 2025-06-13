@@ -40,7 +40,8 @@ async function init() {
         location_id INT REFERENCES locations(location_id),
         designation VARCHAR(100) NOT NULL,
         reporting_to INT REFERENCES users(user_id),
-        area VARCHAR(50)
+        area VARCHAR(50),
+        dashboard_access_enabled BOOLEAN DEFAULT TRUE 
       );
     `);
 

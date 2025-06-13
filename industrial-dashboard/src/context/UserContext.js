@@ -26,7 +26,21 @@ export const UserProvider = ({ children }) => {
       });
       if (res.ok) {
         const userData = await res.json();
-        setUser(userData);
+        // Ensure that departmentId and dashboardAccessEnabled are set from backend userData
+        // This assumes your /api/auth/check-auth endpoint will also return these fields
+        setUser({
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+          designation: userData.designation,
+          area: userData.area,
+          departmentId: userData.department_id, // Ensure your backend sends this as department_id
+          dashboardAccessEnabled: userData.dashboard_access_enabled, // Ensure backend sends this
+          // Assuming department_name and location_name might also come from check-auth or profile
+          departmentName: userData.department_name,
+          locationName: userData.location_name
+        });
       }
     } catch (err) {
       console.error('Auth check failed:', err);
@@ -36,7 +50,20 @@ export const UserProvider = ({ children }) => {
   };
 
   const login = (userData) => {
-    setUser(userData);
+    // When logging in, capture all relevant user data from the backend response
+    setUser({
+      id: userData.id,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      designation: userData.designation,
+      area: userData.area,
+      departmentId: userData.departmentId, // From auth.js /verify-otp response
+      dashboardAccessEnabled: userData.dashboardAccessEnabled, // From auth.js /verify-otp response
+      // departmentName and locationName might need to be fetched via profile if not in login response
+      departmentName: userData.departmentName, // You might need to add this to the login response if desired
+      locationName: userData.locationName // You might need to add this to the login response if desired
+    });
   };
 
   const logout = async () => {

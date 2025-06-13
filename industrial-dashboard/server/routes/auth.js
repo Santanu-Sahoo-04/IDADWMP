@@ -77,53 +77,69 @@ router.post('/send-otp', async (req, res) => {
 });
 
 // ===================== OTP Verification =====================
+// ===================== OTP Verification =====================
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
     const storedData = otpStore.get(email.trim());
-    
+
     if (!storedData || storedData.otp !== otp.trim() || Date.now() > storedData.expires) {
       return res.status(401).json({ error: 'Invalid/expired OTP' });
     }
 
-    // Create session
-    req.session.user = {
-      id: storedData.user.user_id,
-      email: storedData.user.email,
-      role: storedData.user.role
-    };
-
+    // Fetch full user details from the database INCLUDING department_id and dashboard_access_enabled
     const userRes = await pool.query(`
-      SELECT 
+      SELECT
         user_id AS id,
         name,
         email,
         role,
         designation,
-        area
-      FROM users 
+        area,
+        department_id,          
+        dashboard_access_enabled 
+      FROM users
       WHERE user_id = $1
-    `, [storedData.user.user_id]);
+    `, [storedData.user.user_id]); // Use the user_id from storedData
 
     const user = userRes.rows[0];
 
-    // Send user data in response
+    if (!user) {
+      // This case should theoretically not happen if storedData.user is valid
+      return res.status(404).json({ error: 'User not found after OTP verification.' });
+    }
+
+    // Set session data with comprehensive user information
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name, // Also good to include name in session
+      designation: user.designation, // Include other relevant fields if used elsewhere
+      area: user.area,
+      departmentId: user.department_id, // Store department ID in camelCase for frontend
+      dashboardAccessEnabled: user.dashboard_access_enabled // Store access status in camelCase
+    };
+
+    // Send user data in response to the frontend
     res.json({
       success: true,
-      user: {
+      user: { // Ensure this object matches what your UserContext `login` function expects
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
         designation: user.designation,
         area: user.area,
-        redirect: '/dashboard'
+        departmentId: user.department_id, // Match frontend camelCase expectation
+        dashboardAccessEnabled: user.dashboard_access_enabled, // Match frontend camelCase expectation
       },
       redirect: '/dashboard'
     });
 
   } catch (err) {
-    res.status(500).json({ error: 'OTP verification failed' });
+    console.error('OTP verification failed:', err); // Log the actual error
+    res.status(500).json({ error: 'OTP verification failed. Please restart.' });
   }
 });
 
