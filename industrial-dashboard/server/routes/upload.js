@@ -1,11 +1,10 @@
-// backend/routes/upload.js
 import express from 'express';
 import multer from 'multer';
 import { pool } from '../db.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique filenames
+import { v4 as uuidv4 } from 'uuid'; // CRITICAL: Ensure this is imported for UUID generation
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,8 +13,8 @@ const router = express.Router();
 
 const allowedMimeTypes = [
   'text/csv',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  'application/vnd.ms-excel', // .xls
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // .xlsx
 ];
 
 const storage = multer.diskStorage({
@@ -65,6 +64,7 @@ const logFileAction = async (client, fileId, actionType, actionByUserId, actionB
 
 router.post('/file', upload.single('dataFile'), async (req, res) => {
   const client = await pool.connect();
+  let uploaderDesignation = null;
   try {
     await client.query('BEGIN');
 
@@ -85,7 +85,7 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
     }
 
     const uploaderDeptId = req.session.user.departmentId;
-    const uploaderDesignation = req.session.user.designation;
+    uploaderDesignation = req.session.user.designation;
     const isCMD = uploaderDesignation && uploaderDesignation.toLowerCase() === 'cmd';
 
     let targetDepartmentId = uploaderDeptId;
@@ -327,10 +327,11 @@ router.delete('/file/:filename', async (req, res) => {
 router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res) => {
   const client = await pool.connect();
   let newFile = null;
+  let uploaderDesignation = null;
   try {
     await client.query('BEGIN');
 
-    const { originalFilename } = req.params;
+    const { originalFilename } = req.params; // This originalFilename is the UUID filename of the active file
     newFile = req.file;
 
     if (!req.session.user || req.session.user.role !== 'senior') {
@@ -344,15 +345,15 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
     }
 
     const userId = req.session.user.id;
-    const userDesignation = req.session.user.designation;
+    uploaderDesignation = req.session.user.designation;
     const userDepartmentId = req.session.user.departmentId;
-    const isCMD = userDesignation && userDesignation.toLowerCase() === 'cmd';
+    const isCMD = uploaderDesignation && uploaderDesignation.toLowerCase() === 'cmd';
 
     const originalFileRes = await client.query(`
       SELECT upload_id, department_id, original_name, file_path, status
       FROM file_uploads
       WHERE filename = $1 AND status = 'active'
-    `, [originalFilename]);
+    `, [originalFilename]); // Find active file by its UUID filename
 
     if (originalFileRes.rowCount === 0) {
       if (newFile && fs.existsSync(newFile.path)) fs.unlinkSync(newFile.path);
@@ -417,7 +418,7 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
                 new_pending_original_name: newFile.originalname,
                 new_pending_filename_on_disk: newFile.filename,
                 edited_by_name: req.session.user.name,
-                edited_by_designation: userDesignation, // Pass userDesignation here
+                edited_by_designation: userDesignation,
             },
             null, null, pendingFileId
         );
@@ -454,7 +455,7 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
                 new_pending_original_name: newFile.originalname,
                 new_pending_filename_on_disk: newFile.filename,
                 edited_by_name: req.session.user.name,
-                edited_by_designation: userDesignation, // Pass userDesignation here
+                edited_by_designation: userDesignation,
             },
             null, null, pendingFileId
         );
@@ -727,7 +728,7 @@ router.post('/file-action/:activeFileId', async (req, res) => {
       },
       userId,
       notes,
-      pendingFileDetails.upload_id
+      null // CRITICAL FIX: Pass NULL here to avoid FK violation
     );
     console.log(`[FILE_ACTION] Logged action ${logActionType}`);
 
@@ -738,7 +739,7 @@ router.post('/file-action/:activeFileId', async (req, res) => {
     await client.query('ROLLBACK');
     console.error('[FILE_ACTION] Error performing file action:', err);
     const actionToReport = action || 'unknown_action';
-    res.status(500).json({ error: `Failed to ${actionToReport} file due to server error.` });
+    res.status(500).json({ error: `Failed to ${actionToReport} file due to server.` });
   } finally {
     client.release();
   }
