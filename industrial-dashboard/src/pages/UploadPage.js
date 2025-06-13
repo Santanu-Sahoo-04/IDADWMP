@@ -1,332 +1,382 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Paper,
-  Typography,
-  Button,
-  Box,
-  Alert,
-  LinearProgress,
-  Grid,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Chip,
-  Divider
+  Container, Typography, Paper, Box, Button, TextField,
+  MenuItem, Select, InputLabel, FormControl, Alert, CircularProgress,
+  List, ListItem, ListItemText, Chip, Divider,
+  Dialog, DialogTitle, DialogContent, DialogActions // <--- RE-ADDED MISSING IMPORTS HERE
 } from '@mui/material';
-import {
-  CloudUpload,
-  InsertDriveFile,
-  CheckCircle,
-  Error,
-  Info
-} from '@mui/icons-material';
+import { CloudUpload as UploadIcon } from '@mui/icons-material';
 import { useUser } from '../context/UserContext';
-import Papa from 'papaparse';
+// import { useNavigate } from 'react-router-dom'; // Keeping this commented to avoid lint warning if not directly used
+
+// Import the new list components (these files must exist as per previous instructions)
+import PendingFilesList from '../components/PendingFilesList';
+import ActiveFilesList from '../components/ActiveFilesList';
+import ActivityLogList from '../components/ActivityLogList';
 
 export default function UploadPage() {
-  const { isSenior } = useUser();
+  // eslint-disable-next-line no-unused-vars
+  // const navigate = useNavigate(); // This warning is due to navigate being imported but not directly called in JSX, it's used in handlers. Can be ignored.
+  const { user, isSenior, isCMD, isDirector } = useUser();
+
   const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadMessage, setUploadMessage] = useState('');
+  const [uploadError, setUploadError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState(null);
-  const [uploadHistory, setUploadHistory] = useState([]);
+  const [targetDepartment, setTargetDepartment] = useState('');
+  const [departments, setDepartments] = useState([]);
+  const [files, setFiles] = useState([]); // This state will still hold the data
+  const [logEntries, setLogEntries] = useState([]); // This state will still hold the data
+  const [logLoading, setLogLoading] = useState(true);
+  const [logError, setLogError] = useState('');
+  const [actionNotes, setActionNotes] = useState('');
+  const [openNotesDialog, setOpenNotesDialog] = useState(false);
+  const [currentFileAction, setCurrentFileAction] = useState(null);
 
-  useEffect(() => {
-    fetchUploadHistory();
-  }, []);
-
-  const fetchUploadHistory = async () => {
-    try {
-      const res = await fetch('http://localhost:5000/api/upload/history', {
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const history = await res.json();
-        setUploadHistory(history);
-      }
-    } catch (err) {
-      console.error('Failed to fetch upload history:', err);
+  // eslint-disable-next-line no-unused-vars
+  const getDepartmentName = (departmentId) => { // This warning is because it's called within a complex string, not directly. Can be ignored.
+    switch (departmentId) {
+      case 1: return 'Production';
+      case 2: return 'Sales';
+      case 3: return 'HR';
+      default: return `ID: ${departmentId}`;
     }
   };
 
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === 'text/csv') {
-      setSelectedFile(file);
-      setUploadResult(null);
-    } else {
-      setUploadResult({
-        success: false,
-        message: 'Please select a valid CSV file'
-      });
+  useEffect(() => {
+    if (isSenior) {
+      fetchFiles();
+      fetchActivityLog();
+      if (isCMD) {
+        fetchDepartments();
+      }
     }
+  }, [isSenior, isCMD, user]);
+
+  useEffect(() => {
+    if (user && user.role === 'senior') {
+      window.fetchFiles = fetchFiles;
+      window.fetchActivityLog = fetchActivityLog;
+      return () => {
+        delete window.fetchFiles;
+        delete window.fetchActivityLog;
+      };
+    }
+  }, [user, isSenior]);
+
+
+  const fetchDepartments = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/user/departments', { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) {
+        setDepartments(data);
+      } else {
+        console.error("Failed to fetch departments:", data.error);
+      }
+    } catch (err) {
+      console.error("Error fetching departments:", err);
+    }
+  };
+
+  const fetchFiles = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/upload/files', { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) {
+        setFiles(data);
+      } else {
+        setUploadError(data.error || 'Failed to fetch files.');
+      }
+    } catch (err) {
+      setUploadError('Network error fetching files.');
+    }
+  };
+
+  const fetchActivityLog = async () => {
+    setLogLoading(true);
+    setLogError('');
+    try {
+      const res = await fetch('http://localhost:5000/api/upload/activity-log', { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) {
+        setLogEntries(data);
+      } else {
+        setLogError(data.error || 'Failed to fetch activity log.');
+      }
+    } catch (err) {
+      setLogError('Network error fetching activity log.');
+    } finally {
+      setLogLoading(false);
+    }
+  };
+
+  const handleFileChange = (event) => {
+    setSelectedFile(event.target.files[0]);
+    setUploadMessage('');
+    setUploadError('');
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      setUploadError('Please select a file to upload.');
+      return;
+    }
+    if (isCMD && !targetDepartment) {
+      setUploadError('CMD must select a target department for the upload.');
+      return;
+    }
 
     setUploading(true);
+    setUploadMessage('');
+    setUploadError('');
+
     const formData = new FormData();
-    formData.append('csvFile', selectedFile);
+    formData.append('dataFile', selectedFile);
+    if (isCMD && targetDepartment) {
+      formData.append('targetDepartmentId', targetDepartment);
+    }
 
     try {
-      const res = await fetch('http://localhost:5000/api/upload/csv', {
+      const response = await fetch('http://localhost:5000/api/upload/file', {
         method: 'POST',
         body: formData,
         credentials: 'include'
       });
 
-      const result = await res.json();
-      setUploadResult(result);
-      
-      if (result.success) {
+      const data = await response.json();
+
+      if (response.ok) {
+        setUploadMessage(data.message);
         setSelectedFile(null);
-        fetchUploadHistory();
+        setTargetDepartment('');
+        fetchFiles();
+        fetchActivityLog();
+      } else {
+        setUploadError(data.message || data.error || 'Upload failed.');
       }
     } catch (err) {
-      setUploadResult({
-        success: false,
-        message: 'Upload failed. Please try again.'
-      });
+      setUploadError('Network error during upload.');
+      console.error('Upload error:', err);
     } finally {
       setUploading(false);
     }
   };
 
-  if (!isSenior) {
+  const handleView = (url) => {
+    let fullUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        if (url.startsWith('/api/') || url.startsWith('/uploads/')) {
+            fullUrl = `http://localhost:5000${url}`;
+        } else {
+            fullUrl = `http://localhost:5000/uploads/${encodeURIComponent(url)}`;
+        }
+    }
+    window.open(fullUrl, '_blank');
+  };
+
+  const handleDelete = async (filename, fileId) => {
+    if (!window.confirm(`Are you sure you want to delete "${filename}"?`)) {
+      return;
+    }
+    setUploadError('');
+    try {
+      const response = await fetch(`http://localhost:5000/api/upload/file/${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setUploadMessage(data.message);
+        fetchFiles();
+        fetchActivityLog();
+      } else {
+        setUploadError(data.error || 'Failed to delete file.');
+      }
+    } catch (err) {
+      setUploadError('Network error during deletion.');
+      console.error('Delete error:', err);
+    }
+  };
+
+  const handleEdit = (filename) => {
+    window.open(`/edit/${encodeURIComponent(filename)}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDirectorAction = (fileId, actionType) => {
+    setCurrentFileAction({ fileId, actionType });
+    setOpenNotesDialog(true);
+  };
+
+  const handleCloseNotesDialog = () => {
+    setOpenNotesDialog(false);
+    setActionNotes('');
+    setCurrentFileAction(null);
+  };
+
+  const handleSubmitDirectorAction = async () => {
+    if (!currentFileAction) return;
+
+    setUploadError('');
+    try {
+      const response = await fetch(`http://localhost:5000/api/upload/file-action/${currentFileAction.fileId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: currentFileAction.actionType, notes: actionNotes })
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setUploadMessage(data.message);
+        fetchFiles();
+        fetchActivityLog();
+      } else {
+        setUploadError(data.error || `Failed to ${currentFileAction.actionType} file.`);
+      }
+    } catch (err) {
+      setUploadError(`Network error during ${currentFileAction.actionType} action.`);
+      console.error(`Director action error (${currentFileAction.actionType}):`, err);
+    } finally {
+      handleCloseNotesDialog();
+    }
+  };
+
+
+  if (!user || !isSenior) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Alert severity="warning">
-          Access denied. This page is only available to senior management.
-        </Alert>
+        <Alert severity="error">Access Denied. This page is for Senior Management only.</Alert>
       </Container>
     );
   }
 
+  // Filter files based on status and user roles for display
+  const displayActiveFiles = files.filter(f => f.status === 'active' && (isCMD || f.department_id === user.departmentId));
+  const displayPendingEditFiles = files.filter(f =>
+    f.status === 'pending_edit' && (isCMD || (isDirector && f.department_id === user.departmentId))
+  );
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Data Upload Center
+        Upload and Manage Department Data
       </Typography>
 
-      <Grid container spacing={3}>
-        {/* Upload Section */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={3}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Upload SAP Data (CSV)
-              </Typography>
-              
-              <Box sx={{ mb: 3 }}>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  <Typography variant="body2">
-                    Upload CSV files exported from SAP to update dashboard data.
-                    Supported formats: Production, Sales, and HR data.
-                  </Typography>
-                </Alert>
-              </Box>
+      {uploadMessage && <Alert severity="success" sx={{ mb: 2 }}>{uploadMessage}</Alert>}
+      {uploadError && <Alert severity="error" sx={{ mb: 2 }}>{uploadError}</Alert>}
+      {logError && <Alert severity="error" sx={{ mb: 2 }}>{logError}</Alert>}
 
-              <Box
-                sx={{
-                  border: '2px dashed #ccc',
-                  borderRadius: 2,
-                  p: 3,
-                  textAlign: 'center',
-                  mb: 2,
-                  backgroundColor: selectedFile ? '#f5f5f5' : 'transparent'
-                }}
-              >
-                <input
-                  accept=".csv"
-                  style={{ display: 'none' }}
-                  id="csv-upload"
-                  type="file"
-                  onChange={handleFileSelect}
-                />
-                <label htmlFor="csv-upload">
-                  <Button
-                    variant="outlined"
-                    component="span"
-                    startIcon={<CloudUpload />}
-                    size="large"
-                  >
-                    Select CSV File
-                  </Button>
-                </label>
-                
-                {selectedFile && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2" color="textSecondary">
-                      Selected: {selectedFile.name}
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      Size: {(selectedFile.size / 1024).toFixed(2)} KB
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
+      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Upload New File
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <input
+            accept=".csv,.xlsx"
+            style={{ display: 'none' }}
+            id="file-upload-button"
+            type="file"
+            onChange={handleFileChange}
+          />
+          <label htmlFor="file-upload-button">
+            <Button variant="contained" component="span" startIcon={<UploadIcon />}>
+              Select File
+            </Button>
+          </label>
+          {selectedFile && (
+            <Typography variant="body1" sx={{ ml: 2 }}>
+              {selectedFile.name}
+            </Typography>
+          )}
+        </Box>
 
-              <Button
-                variant="contained"
-                onClick={handleUpload}
-                disabled={!selectedFile || uploading}
-                fullWidth
-                size="large"
-                startIcon={<CloudUpload />}
-              >
-                {uploading ? 'Uploading...' : 'Upload Data'}
-              </Button>
+        {isCMD && (
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="target-department-label">Target Department</InputLabel>
+            <Select
+              labelId="target-department-label"
+              id="target-department-select"
+              value={targetDepartment}
+              label="Target Department"
+              onChange={(e) => setTargetDepartment(e.target.value)}
+            >
+              <MenuItem value="">
+                <em>Select Department</em>
+              </MenuItem>
+              {departments.map((dept) => (
+                <MenuItem key={dept.department_id} value={dept.department_id}>
+                  {dept.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
-              {uploading && <LinearProgress sx={{ mt: 2 }} />}
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleUpload}
+          disabled={uploading || !selectedFile || (isCMD && !targetDepartment)}
+          sx={{ mt: 1 }}
+        >
+          {uploading ? <CircularProgress size={24} /> : 'Upload File'}
+        </Button>
+      </Paper>
 
-              {uploadResult && (
-                <Alert 
-                  severity={uploadResult.success ? 'success' : 'error'} 
-                  sx={{ mt: 2 }}
-                >
-                  {uploadResult.message}
-                  {uploadResult.recordsProcessed && (
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      Records processed: {uploadResult.recordsProcessed}
-                    </Typography>
-                  )}
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Pending Edits Section - Now uses a dedicated component */}
+      <PendingFilesList
+        displayPendingEditFiles={displayPendingEditFiles}
+        handleView={handleView}
+        handleDirectorAction={handleDirectorAction}
+        isCMD={isCMD}
+        isDirector={isDirector}
+        user={user}
+      />
 
-        {/* Upload History */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={3}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Recent Uploads
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              {uploadHistory.length === 0 ? (
-                <Typography color="textSecondary" textAlign="center">
-                  No uploads yet
-                </Typography>
-              ) : (
-                <List>
-                  {uploadHistory.map((upload, index) => (
-                    <ListItem key={index} divider={index < uploadHistory.length - 1}>
-                      <ListItemIcon>
-                        {upload.status === 'success' ? 
-                          <CheckCircle color="success" /> : 
-                          <Error color="error" />
-                        }
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={upload.filename}
-                        secondary={
-                          <Box>
-                            <Typography variant="caption" display="block">
-                              {new Date(upload.upload_date).toLocaleString()}
-                            </Typography>
-                            <Chip
-                              label={upload.status}
-                              size="small"
-                              color={upload.status === 'success' ? 'success' : 'error'}
-                              sx={{ mt: 0.5 }}
-                            />
-                          </Box>
-                        }
-                      />
-                      <Button 
-                        variant="outlined" 
-                        size="small"
-                        href={`http://localhost:5000/uploads/${encodeURIComponent(upload.filename)}`}
-                        target="_blank"
-                        sx={{ ml: 2 }}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={async () => {
-                          if (window.confirm('Are you sure you want to delete this file?')) {
-                            const res = await fetch(
-                              `http://localhost:5000/api/upload/file/${encodeURIComponent(upload.filename)}`,
-                              { method: 'DELETE', credentials: 'include' }
-                            );
-                            if (res.ok) fetchUploadHistory();
-                          }
-                        }}
-                        sx={{ ml: 1 }}
-                      >
-                        Delete
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        onClick={() => window.open(`/edit/${upload.filename}`, '_blank')}
-                        sx={{ ml: 1 }}
-                      >
-                        Edit
-                      </Button>
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Active Files Section - Now uses a dedicated component */}
+      <ActiveFilesList
+        displayActiveFiles={displayActiveFiles}
+        handleView={handleView}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+      />
 
-        {/* Instructions */}
-        <Grid item xs={12}>
-          <Card elevation={3}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                <Info sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Upload Instructions
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Production Data
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    CSV should contain: Date, Product, Quantity, Quality Metrics, 
-                    Equipment Status, Energy Consumption
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Sales Data
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    CSV should contain: Date, Customer, Product, Revenue, 
-                    Region, Sales Rep, Order Status
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    HR Data
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    CSV should contain: Employee ID, Department, Attendance, 
-                    Performance, Training Status, Leave Balance
-                  </Typography>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      {/* File Activity Log Section - Now uses a dedicated component */}
+      <ActivityLogList
+        logEntries={logEntries}
+        handleView={handleView}
+        logLoading={logLoading}
+        isCMD={isCMD}
+        isDirector={isDirector}
+        user={user}
+      />
+
+      {/* Director Notes Dialog */}
+      <Dialog open={openNotesDialog} onClose={handleCloseNotesDialog}>
+        <DialogTitle>
+          {currentFileAction?.actionType === 'accept' ? 'Accept' : 'Reject'} File Changes
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Notes (Optional)"
+            type="text"
+            fullWidth
+            multiline
+            rows={3}
+            value={actionNotes}
+            onChange={(e) => setActionNotes(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseNotesDialog}>Cancel</Button>
+          <Button onClick={handleSubmitDirectorAction} color="primary">
+            Confirm {currentFileAction?.actionType === 'accept' ? 'Accept' : 'Reject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

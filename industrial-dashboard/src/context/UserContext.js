@@ -22,47 +22,46 @@ export const UserProvider = ({ children }) => {
   const checkAuthStatus = async () => {
     try {
       const res = await fetch('http://localhost:5000/api/auth/check-auth', {
-        credentials: 'include'
+        credentials: 'include' // Crucial for sending session cookie
       });
       if (res.ok) {
         const userData = await res.json();
-        // Ensure that departmentId and dashboardAccessEnabled are set from backend userData
-        // This assumes your /api/auth/check-auth endpoint will also return these fields
         setUser({
           id: userData.id,
           name: userData.name,
           email: userData.email,
           role: userData.role,
-          designation: userData.designation,
+          designation: userData.designation, // Capture designation
           area: userData.area,
-          departmentId: userData.department_id, // Ensure your backend sends this as department_id
-          dashboardAccessEnabled: userData.dashboard_access_enabled, // Ensure backend sends this
-          // Assuming department_name and location_name might also come from check-auth or profile
-          departmentName: userData.department_name,
-          locationName: userData.location_name
+          departmentId: userData.department_id,
+          dashboardAccessEnabled: userData.dashboard_access_enabled,
+          departmentName: userData.department_name, // If provided by check-auth/profile
+          locationName: userData.location_name // If provided by check-auth/profile
         });
+      } else {
+        // If not authenticated or error, clear user
+        setUser(null);
       }
     } catch (err) {
       console.error('Auth check failed:', err);
+      setUser(null); // Ensure user is null on error
     } finally {
-      setLoading(false);
+      setLoading(false); // ALWAYS set loading to false
     }
   };
 
   const login = (userData) => {
-    // When logging in, capture all relevant user data from the backend response
     setUser({
       id: userData.id,
       name: userData.name,
       email: userData.email,
       role: userData.role,
-      designation: userData.designation,
+      designation: userData.designation, // Capture designation from login response
       area: userData.area,
-      departmentId: userData.departmentId, // From auth.js /verify-otp response
-      dashboardAccessEnabled: userData.dashboardAccessEnabled, // From auth.js /verify-otp response
-      // departmentName and locationName might need to be fetched via profile if not in login response
-      departmentName: userData.departmentName, // You might need to add this to the login response if desired
-      locationName: userData.locationName // You might need to add this to the login response if desired
+      departmentId: userData.departmentId,
+      dashboardAccessEnabled: userData.dashboardAccessEnabled,
+      departmentName: userData.departmentName,
+      locationName: userData.locationName
     });
   };
 
@@ -85,7 +84,10 @@ export const UserProvider = ({ children }) => {
     loading,
     isAuthenticated: !!user,
     isSenior: user?.role === 'senior',
-    isJunior: user?.role === 'junior'
+    isJunior: user?.role === 'junior',
+    isCMD: user?.designation?.toLowerCase() === 'cmd', // Helper for CMD check
+    // Check for Director includes 'director' in designation (case-insensitive)
+    isDirector: user?.designation?.toLowerCase().includes('director') || user?.designation?.toLowerCase().includes('ed') || user?.designation?.toLowerCase().includes('ggm') // Check Director, ED, GGM
   };
 
   return (

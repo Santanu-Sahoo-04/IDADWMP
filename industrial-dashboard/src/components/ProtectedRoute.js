@@ -1,8 +1,7 @@
 import React from 'react';
-
+import { Navigate, useLocation } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { CircularProgress, Box } from '@mui/material';
-import { Navigate, useLocation } from 'react-router-dom'; 
 
 const ProtectedRoute = ({ children, requiredRole, isDepartmentDashboard = false }) => {
   const { user, loading, isAuthenticated, isSenior, isJunior } = useUser();
@@ -19,13 +18,14 @@ const ProtectedRoute = ({ children, requiredRole, isDepartmentDashboard = false 
   if (!isAuthenticated) {
     return <Navigate to="/login1" replace />;
   }
-// Role-based protection for senior-specific routes (e.g., /upload, /user-management)
+
+  // Role-based protection for senior-specific routes (e.g., /upload, /user-management)
   if (requiredRole && user?.role !== requiredRole) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Special handling for junior department dashboards
-if (isDepartmentDashboard) {
+  // --- LOGIC FOR DEPARTMENT DASHBOARDS ---
+  if (isDepartmentDashboard) {
     // Seniors always have access to all department dashboards
     if (isSenior) {
       return children; // Senior bypasses further checks for department dashboards
@@ -46,13 +46,13 @@ if (isDepartmentDashboard) {
         return <Navigate to="/dashboard" replace state={{ dashboardAccessDenied: true, message: `Access denied to ${currentPathDept} dashboard. You only have access to the ${userDeptName} dashboard.` }} />;
       }
     } else {
-        // Fallback for unexpected roles if isDepartmentDashboard is true
+        // Fallback for unexpected roles if isDepartmentDashboard is true (shouldn't happen if login roles are strict)
         return <Navigate to="/dashboard" replace />;
     }
   }
-  // --- END NEW LOGIC ---
+  // --- END LOGIC ---
 
-  return children;
+  return children; // For non-department dashboard routes or if checks pass
 };
 
 // Helper to get department name (can be moved to a shared utility or UserContext)
@@ -61,7 +61,7 @@ const getDepartmentName = (departmentId) => {
         case 1: return 'Production';
         case 2: return 'Sales';
         case 3: return 'HR';
-        default: return '';
+        default: return ''; // Should not happen with valid department_ids
     }
 };
 

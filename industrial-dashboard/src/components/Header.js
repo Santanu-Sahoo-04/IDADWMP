@@ -9,7 +9,8 @@ import {
   MenuItem,
   Avatar,
   IconButton,
-  Chip
+  Chip,
+  Alert // Import Alert for displaying messages
 } from '@mui/material';
 import {
   AccountCircle,
@@ -20,14 +21,13 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
-import Alert from '@mui/material/Alert'; // Import Alert
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAuthenticated, isSenior, isJunior } = useUser();
   const [anchorEl, setAnchorEl] = useState(null);
-  const [alertMessage, setAlertMessage] = useState(null);
+  const [alertMessage, setAlertMessage] = useState(null); // State for alert
 
   const handleUserMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -43,13 +43,9 @@ export default function Header() {
     navigate('/');
   };
 
-
   const isActive = (path) => location.pathname === path;
 
-
   const getDepartmentName = (departmentId) => {
-    // You might fetch this from an API or have a static map
-    // For now, based on your create-db.js:
     switch (departmentId) {
       case 1: return 'Production';
       case 2: return 'Sales';
@@ -63,14 +59,14 @@ export default function Header() {
   };
 
   const handleDepartmentDashboardClick = (departmentPath) => {
+    // This check is ONLY for Juniors
     if (isJunior && !user.dashboardAccessEnabled) {
       setAlertMessage("CONTACT THE SENIOR: You do not have access to the department dashboard.");
-      setTimeout(() => setAlertMessage(null), 5000); // Clear alert after 5 seconds
+      setTimeout(() => setAlertMessage(null), 5000);
     } else {
       navigate(departmentPath);
     }
   };
-
 
   if (!isAuthenticated) {
     return (
@@ -92,6 +88,7 @@ export default function Header() {
 
   const userDepartmentName = user ? getDepartmentName(user.departmentId) : '';
   const userDepartmentPath = user ? getDepartmentPath(userDepartmentName) : '';
+
   return (
     <AppBar position="static" elevation={2}>
       <Toolbar>

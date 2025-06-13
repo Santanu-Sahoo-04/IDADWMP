@@ -14,18 +14,18 @@ async function init() {
   try {
     await client.connect();
 
-    // 1. Create tables
+    // 1. Create tables (ensuring new columns are added)
     await client.query(`
       CREATE TABLE IF NOT EXISTS departments (
         department_id SERIAL PRIMARY KEY,
-        name VARCHAR(50) NOT NULL
+        name VARCHAR(50) NOT NULL UNIQUE
       );
     `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS locations (
         location_id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL
+        name VARCHAR(100) NOT NULL UNIQUE
       );
     `);
 
@@ -41,13 +41,58 @@ async function init() {
         designation VARCHAR(100) NOT NULL,
         reporting_to INT REFERENCES users(user_id),
         area VARCHAR(50),
-        dashboard_access_enabled BOOLEAN DEFAULT TRUE 
+        dashboard_access_enabled BOOLEAN DEFAULT TRUE
       );
     `);
 
+    // IMPORTANT: Drop and re-create file_uploads if you had it before to add new columns
+    // Or, run ALTER TABLE statements if you have existing data you want to preserve.
+    // For development, dropping and recreating is usually simpler.
+    await client.query(`
+      DROP TABLE IF EXISTS file_uploads CASCADE;
+    `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS file_uploads (
+        upload_id SERIAL PRIMARY KEY,
+        filename VARCHAR(255) NOT NULL, -- Filename on disk (can be temporary for pending)
+        original_name VARCHAR(255) NOT NULL, -- User-provided original name
+        file_path VARCHAR(500) NOT NULL,
+        uploaded_by INT REFERENCES users(user_id),
+        upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        -- Status can now be: 'active', 'deleted', 'pending_edit', 'superseded_by_edit', 'rejected_edit'
+        status VARCHAR(20) DEFAULT 'active',
+        records_processed INT DEFAULT 0,
+        department_id INT REFERENCES departments(department_id),
+        -- approval_status: Only relevant for 'pending_edit' status, determines if it's awaiting director action.
+        -- Value could be 'pending', 'approved', 'rejected'
+        approval_status VARCHAR(20) DEFAULT 'approved', -- New uploads are immediately active/approved
+        parent_file_id INT REFERENCES file_uploads(upload_id) DEFAULT NULL -- Link to the original file if this is a pending edit
+      );
+      -- Add a unique constraint if needed, but if filenames can be temporary, not always unique.
+      -- If original_name needs to be unique per department, add that constraint.
+    `);
 
-
+    await client.query(`
+      DROP TABLE IF EXISTS file_actions_log CASCADE;
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS file_actions_log (
+        log_id SERIAL PRIMARY KEY,
+        file_id INT REFERENCES file_uploads(upload_id), -- Links to the primary file record (often the parent_file_id for edits)
+        action_type VARCHAR(50) NOT NULL, -- 'upload', 'edit_request', 'delete_request', 'accept_edit', 'reject_edit', 'revert_to_version'
+        action_by INT REFERENCES users(user_id),
+        action_by_department_id INT REFERENCES departments(department_id),
+        action_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        details JSONB, -- { old_filename, new_filename, etc. }
+        target_department_id INT REFERENCES departments(department_id),
+        approval_action_by INT REFERENCES users(user_id) DEFAULT NULL,
+        approval_action_date TIMESTAMP DEFAULT NULL,
+        notes TEXT,
+        -- Reference to the specific file_uploads entry for the pending version if applicable
+        pending_file_id INT REFERENCES file_uploads(upload_id) DEFAULT NULL
+      );
+    `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (
@@ -57,24 +102,25 @@ async function init() {
       );
       CREATE INDEX IF NOT EXISTS IDX_sessions_expire ON sessions (expire);
     `);
-    console.log('✅ Tables created');
+    console.log('✅ Tables created/updated');
 
     // 2. Insert departments and locations
     await client.query(`
-      INSERT INTO departments (name) 
+      INSERT INTO departments (name)
       VALUES ('Production'), ('Sales'), ('HR')
-      ON CONFLICT DO NOTHING;
+      ON CONFLICT (name) DO NOTHING;
     `);
 
     await client.query(`
-      INSERT INTO locations (name) 
+      INSERT INTO locations (name)
       VALUES ('Corporate Office (Bhubaneswar)'), ('Damanjodi Complex')
-      ON CONFLICT DO NOTHING;
+      ON CONFLICT (name) DO NOTHING;
     `);
+    console.log('✅ Departments and locations inserted');
+
 
     // 3. Insert all seniors first (reporting_to: null)
     const seniorUsers = [
-      // name, email, plainPassword, role, department_id, location_id, designation, area
       ['Shri Brijendra Pratap Singh', 'cmd@company.co.in', 'Cmd@2024#', 'senior', 1, 1, 'CMD', 'All'],
       ['Shri Pankaj Kumar Sharma', 'pankaj.sharma@company.co.in', 'Pankaj!Prod88', 'senior', 1, 1, 'Director (Production)', 'All'],
       ['Shri Anuj Kumar Panda', 'anuj.panda@company.co.in', 'AnujP@1234!', 'senior', 1, 2, 'GGM (Production)', 'Damanjodi'],
@@ -86,7 +132,6 @@ async function init() {
       ['Shri Himanshu Sekhar Pradhan', 'himanshu.pradhan@company.co.in', 'Himanshu!HA9', 'senior', 3, 1, 'GGM (H&A)', 'Damanjodi'],
     ];
 
-    // Map to store email -> user_id for reporting_to
     const emailToId = {};
 
     for (const [name, email, plainPassword, role, deptId, locId, designation, area] of seniorUsers) {
@@ -94,7 +139,7 @@ async function init() {
       let userId;
       try {
         const res = await client.query(`
-          INSERT INTO users 
+          INSERT INTO users
             (name, email, password, role, department_id, location_id, designation, reporting_to, area)
           VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8)
           ON CONFLICT (email) DO UPDATE SET
@@ -117,7 +162,6 @@ async function init() {
 
     // 4. Insert juniors (reference reporting_to by senior email)
     const juniorUsers = [
-      // name, email, plainPassword, role, department_id, location_id, designation, reporting_to_email, area
       ['Rajeshwari Patil', 'rajeshwari.patil@company.co.in', 'RajeshwariP@2024', 'junior', 1, 2, 'DGM (Production)', 'anuj.panda@company.co.in', 'Damanjodi'],
       ['Vikram Singh Rathore', 'vikram.rathore@company.co.in', 'VikramRathore#1', 'junior', 1, 2, 'AGM (Production)', 'rajeshwari.patil@company.co.in', 'Damanjodi'],
       ['Sunil Kumar Nayak', 'sunil.nayak@company.co.in', 'SunilN@Cm2024', 'junior', 1, 2, 'CM (Production)', 'vikram.rathore@company.co.in', 'Damanjodi'],
@@ -146,7 +190,6 @@ async function init() {
       if (reportingToEmail && emailToId[reportingToEmail]) {
         reportingTo = emailToId[reportingToEmail];
       } else if (reportingToEmail) {
-        // Try to look up user_id from DB if not in map
         const res = await client.query(`SELECT user_id FROM users WHERE email = $1`, [reportingToEmail]);
         if (res.rows.length > 0) {
           reportingTo = res.rows[0].user_id;
@@ -155,7 +198,7 @@ async function init() {
       }
       try {
         await client.query(`
-          INSERT INTO users 
+          INSERT INTO users
             (name, email, password, role, department_id, location_id, designation, reporting_to, area)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
           ON CONFLICT (email) DO UPDATE SET
