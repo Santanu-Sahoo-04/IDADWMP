@@ -16,7 +16,8 @@ export default function ProductionDashboard() {
       }}>
         {/* Tableau dashboard, fitting inside the box */}
         <tableau-viz
-          src="https://public.tableau.com/views/prod_17496811397050/Dashboard1?:language=en-GB&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
+          //src="https://public.tableau.com/views/prod_17496811397050/Dashboard1?:language=en-GB&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
+          src="https://public.tableau.com/views/Production_17499358474480/Dashboard1?:language=en-GB&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
           toolbar="bottom"
           hide-tabs
           style={{

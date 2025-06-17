@@ -5,7 +5,7 @@ import { pool } from '../db.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'; // CRITICAL: Ensure this is imported for UUID generation
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,9 +26,10 @@ const storage = multer.diskStorage({
     }
     cb(null, uploadDir);
   },
+  // Generate truly unique filenames using UUID here as well
   filename: (req, file, cb) => {
     const fileExtension = path.extname(file.originalname);
-    const uniqueFilename = `${uuidv4()}${fileExtension}`;
+    const uniqueFilename = `${uuidv4()}${fileExtension}`; // e.g., 'a1b2c3d4-e5f6-7890-1234-567890abcdef.csv'
     cb(null, uniqueFilename);
   }
 });
@@ -64,8 +65,9 @@ const logFileAction = async (client, fileId, actionType, actionByUserId, actionB
 
 router.post('/file', upload.single('dataFile'), async (req, res) => {
   const client = await pool.connect();
-  // uploaderDesignation and uploaderDeptId are used only within this route's try block,
-  // so their scope is fine as defined below.
+  let uploaderDesignation = null;
+  let uploaderDeptId = null;
+  let userId = null;
   try {
     await client.query('BEGIN');
 
@@ -77,9 +79,10 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
       });
     }
 
-    const userId = req.session.user.id;
-    const uploaderDeptId = req.session.user.departmentId;
-    const uploaderDesignation = req.session.user.designation;
+    // Capture user details immediately after session check
+    userId = req.session.user.id;
+    uploaderDeptId = req.session.user.departmentId;
+    uploaderDesignation = req.session.user.designation;
 
     if (!req.file) {
       await client.query('ROLLBACK');
@@ -119,7 +122,7 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
       RETURNING upload_id;
     `, [
       req.file.filename,
-      req.file.originalname,
+      req.file.originalname, // This should contain the original extension (e.g., "my_report.csv")
       req.file.path,
       userId,
       recordsProcessed,
@@ -142,7 +145,7 @@ router.post('/file', upload.single('dataFile'), async (req, res) => {
         original_name: req.file.originalname,
         file_mimetype: req.file.mimetype,
         uploaded_by_name: req.session.user.name,
-        uploaded_by_designation: uploaderDesignation, // uploaderDesignation is defined here
+        uploaded_by_designation: uploaderDesignation,
       }
     );
 
@@ -223,7 +226,7 @@ router.get('/files', async (req, res) => {
 
     const files = result.rows.map(row => ({
       ...row,
-      viewUrl: `/uploads/${encodeURIComponent(row.filename)}`
+      viewUrl: `/uploads/${encodeURIComponent(row.filename)}` // This filename is the UUID one from DB
     }));
 
     res.json(files);
@@ -242,7 +245,7 @@ router.delete('/file/:filename', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    const { filename } = req.params;
+    const { filename } = req.params; // This filename will be the UUID one from the URL
     const filePath = path.join(__dirname, '../uploads', filename);
 
     if (!req.session.user || req.session.user.role !== 'senior') {
@@ -250,7 +253,6 @@ router.delete('/file/:filename', async (req, res) => {
       return res.status(403).json({ error: 'Access denied. Senior management only.' });
     }
 
-    // Capture user details immediately after session check
     userId = req.session.user.id;
     userDesignation = req.session.user.designation;
     userDepartmentId = req.session.user.departmentId;
@@ -313,7 +315,7 @@ router.delete('/file/:filename', async (req, res) => {
         filename: filename,
         original_name: fileDetails.original_name,
         deleted_by_name: req.session.user.name,
-        deleted_by_designation: userDesignation, // userDesignation is defined here
+        deleted_by_designation: userDesignation,
         file_status_before_delete: fileDetails.status
       }
     );
@@ -340,7 +342,7 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
   try {
     await client.query('BEGIN');
 
-    const { originalFilename } = req.params;
+    const { originalFilename } = req.params; // This `originalFilename` is the UUID filename from the URL, passed from frontend
     newFile = req.file;
 
     if (!req.session.user || req.session.user.role !== 'senior') {
@@ -360,6 +362,7 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
 
     const isCMD = userDesignation && userDesignation.toLowerCase() === 'cmd';
 
+    // Find active file by its UUID filename (originalFilename param)
     const originalFileRes = await client.query(`
       SELECT upload_id, department_id, original_name, file_path, status
       FROM file_uploads
@@ -410,7 +413,7 @@ router.put('/file/:originalFilename', upload.single('dataFile'), async (req, res
              uploaded_by = $4, upload_date = NOW(), approval_status = 'pending'
              WHERE upload_id = $5
              RETURNING upload_id;`,
-            [newFile.filename,
+            [newFile.filename, // This will be the UUID filename from multer
              newFile.originalname,
              newFile.path,
              userId,
@@ -727,8 +730,8 @@ router.post('/file-action/:activeFileId', async (req, res) => {
       client,
       activeFileId,
       logActionType,
-      userId, // userId is defined here
-      userDepartmentId, // userDepartmentId is defined here
+      userId,
+      userDepartmentId,
       activeFileDetails.department_id,
       {
         file_original_name: activeFileDetails.original_name,
@@ -739,9 +742,9 @@ router.post('/file-action/:activeFileId', async (req, res) => {
       },
       userId,
       notes,
-      null
+      null // CRITICAL FIX: Pass NULL here to avoid FK violation
     );
-    console.log(`[FILE_ACTION] Logged action ${logActionType}`);
+    console.log(`[LOG_ACTION] Logged action ${logActionType}`);
 
     await client.query('COMMIT');
     res.json({ success: true, message: message });

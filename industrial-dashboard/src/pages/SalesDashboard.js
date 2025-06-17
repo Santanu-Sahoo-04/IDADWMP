@@ -16,7 +16,8 @@ export default function SalesDashboard() {
       }}>
         {/* Tableau dashboard, fitting inside the box */}
         <tableau-viz
-          src="https://public.tableau.com/views/SALESDASHBOARD_17494455486100/SALESDAHSBOARD?:language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
+        src="https://public.tableau.com/views/SALES_DASHBOARD_17499323313860/SALESDASHBOARD?:language=en-GB&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
+          //src="https://public.tableau.com/views/SALESDASHBOARD_17494455486100/SALESDAHSBOARD?:language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"
           toolbar="bottom"
           hide-tabs
           style={{
