@@ -31,3 +31,11 @@
 ### Feature : CSV File Editing Interface
 <img width="969" height="430" alt="image" src="https://github.com/user-attachments/assets/480878d6-79f8-4866-84df-7fed00abc9b1" />
 
+### FUTURE SCOPE:
+- Advanced Analytics and Predictive Modeling
+- Automate data extraction into IDADWMP
+- Implement ETL pipelines for periodic extraction, transformation, and loading of large, aggregated datasets
+- Integrate OCR to extract structured data from scanned documents
+- Extend current approval workflows to multi-stage processes with multiple approvers or conditional routing.
+- Implement automated task assignment and robust notification systems (email, SMS) for workflow triggers and critical thresholds.
+- Enhance data masking and anonymization for sensitive data (e.g., PII in HR records)
